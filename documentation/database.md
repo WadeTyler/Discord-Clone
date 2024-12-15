@@ -20,3 +20,36 @@ password: ****
 | tag      | varchar(4)   | NO   |     | NULL    |       |
 +----------+--------------+------+-----+---------+-------+
 
+
+#### servers
++-------------+--------------+------+-----+---------+-------+
+| Field       | Type         | Null | Key | Default | Extra |
++-------------+--------------+------+-----+---------+-------+
+| serverID    | varchar(512) | NO   | PRI | NULL    |       |
+| serverName  | varchar(50)  | NO   |     | NULL    |       |
+| serverOwner | varchar(512) | NO   | MUL | NULL    |       |
+| serverIcon  | varchar(50)  | YES  |     | NULL    |       |
++-------------+--------------+------+-----+---------+-------+
+
+#### channels
++--------------------+--------------+------+-----+---------+-------+
+| Field              | Type         | Null | Key | Default | Extra |
++--------------------+--------------+------+-----+---------+-------+
+| channelID          | varchar(512) | NO   | PRI | NULL    |       |
+| channelName        | varchar(50)  | NO   |     | NULL    |       |
+| serverID           | varchar(512) | NO   | MUL | NULL    |       |
+| channelDescription | varchar(100) | YES  |     | NULL    |       |
+| channelOrder       | int          | NO   |     | NULL    |       |
++--------------------+--------------+------+-----+---------+-------+
+
+#### messages
++-----------+--------------+------+-----+-------------------+-------------------+
+| Field     | Type         | Null | Key | Default           | Extra             |
++-----------+--------------+------+-----+-------------------+-------------------+
+| messageID | bigint       | NO   | PRI | NULL              | auto_increment    |
+| senderID  | varchar(512) | NO   | MUL | NULL              |                   |
+| timestamp | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
+| channelID | varchar(512) | NO   | MUL | NULL              |                   |
+| content   | text         | YES  |     | NULL              |                   |
++-----------+--------------+------+-----+-------------------+-------------------+
+
