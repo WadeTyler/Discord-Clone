@@ -1,5 +1,6 @@
 package net.tylerwade.discord.models;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -12,6 +13,7 @@ public class Server {
     private String serverID;
     private String serverName;
     private String serverOwner;
+    @Column(name="serverIcon")
     private String serverIcon;
 
     public Server(String serverID, String serverName, String serverOwner, String serverIcon) {

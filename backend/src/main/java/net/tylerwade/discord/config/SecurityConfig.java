@@ -1,4 +1,4 @@
-package net.tylerwade.discord.lib;
+package net.tylerwade.discord.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

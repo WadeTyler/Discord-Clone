@@ -141,9 +141,7 @@ public class UserController {
             if (authToken.isEmpty() || authToken.isBlank()) return new ResponseEntity(new ErrorMessage("User not signed in."), HttpStatus.BAD_REQUEST);
 
             // Remove authToken cookie
-            Cookie cookie = new Cookie("authToken", "");
-            cookie.setMaxAge(0);
-            response.addCookie(cookie);
+            response.addCookie(getLogoutCookie());
 
             return new ResponseEntity(new SuccessMessage("Logout Successful."), HttpStatus.OK);
 
@@ -187,6 +185,17 @@ public class UserController {
         cookie.setMaxAge(604800);   // 7 days
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
+        cookie.setPath("/");
+
+        return cookie;
+    }
+
+    private Cookie getLogoutCookie() {
+        Cookie cookie = new Cookie("authToken", "");
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
 
         return cookie;
     }
