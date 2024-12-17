@@ -6,13 +6,16 @@ import { Channel, Message, Server, User } from "../types/types";
 import { IconCrown, IconHash, IconPinFilled, IconPlus, IconSearch, IconUsers } from "@tabler/icons-react";
 import { server1GeneralMessages, server1Users } from "../constants/testData";
 import MessageComponent from "../components/MessageComponent";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const ServerPage = () => {
 
   const { currentServer, currentTextChannel,  setCurrentServer } = useAppContext();
   const [showUserList, setShowUserList] = useState<boolean>(true);
 
-  // TODO: Load the first channel based on currentServer
+  const API_URL = import.meta.env.VITE_API_URL;
 
   return (
     <div className="flex flex-col w-full h-screen relative">

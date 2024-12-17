@@ -1,6 +1,7 @@
 package net.tylerwade.discord.repositories;
 
 import jakarta.transaction.Transactional;
+import net.tylerwade.discord.models.Server;
 import net.tylerwade.discord.models.ServerJoin;
 import net.tylerwade.discord.models.ServerJoinPK;
 import org.springframework.data.jpa.repository.Modifying;

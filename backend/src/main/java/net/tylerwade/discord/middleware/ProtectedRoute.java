@@ -27,6 +27,10 @@ public class ProtectedRoute implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         Cookie[] cookies = request.getCookies();
 
+        if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
+            return true;
+        }
+
         // Check for null or missing cookies
         if (cookies == null) {
             setUnauthorizedResponse(response, "You are not Logged in.");

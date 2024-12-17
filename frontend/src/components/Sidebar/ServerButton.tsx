@@ -1,18 +1,22 @@
 import { useState } from "react"
 import { Server } from "../../types/types"
 import { motion } from "framer-motion";
+import { useAppContext } from "../../context/AppContext";
 
 const ServerButton = ({server}: {server: Server}) => {
 
   const [hovering, setHovering] = useState<boolean>(false);
 
+  const { setCurrentServer } = useAppContext();
+
   return (
     <div className="relative">
       <div 
+      onClick={() => setCurrentServer(server)}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       className="w-12 h-12 flex items-center justify-center relative cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 bg-primary p-2">
-        <img src={server.serverIcon} alt="Server Icon" className='group-hover:rounded-md rounded-full w-full h-full duration-300'/>
+        <img style={{content: `url("${server.serverIcon || "https://cdn.iconscout.com/icon/free/png-256/discord-3-569463.png"}")`}} alt="Server Icon" className='group-hover:rounded-md rounded-full w-full h-full duration-300'/>
       </div>
 
       {hovering && <ServerLabel server={server} />}
@@ -25,13 +29,12 @@ export default ServerButton
 
 const ServerLabel = ({server}: {server: Server}) => {
 
-
   return (
     <motion.div 
     initial={{ scale: 0.9 }}
     whileInView={{ scale: 1 }}
     transition={{ duration: .2 }}
-    className="bg-tertiary absolute top-1/2 -translate-y-1/2 left-[150%] z-50 max-w-24 px-2 py-1 rounded">
+    className="bg-tertiary absolute top-1/2 -translate-y-1/2 left-[150%] z-50 px-2 py-1 rounded">
       <p className="text-sm w-full whitespace-nowrap">{server.serverName}</p>
     </motion.div>
   )

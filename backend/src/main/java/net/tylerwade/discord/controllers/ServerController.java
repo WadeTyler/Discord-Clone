@@ -140,4 +140,20 @@ public class ServerController {
             return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // Get joined Servers
+    @GetMapping(path="/joined")
+    public ResponseEntity getJoinedServers(@CookieValue("authToken") String authToken) {
+        try {
+            String userID = jwtUtil.getValue(authToken);
+
+            List<Server> joinedServers = serverRepository.findAllJoinedServers(userID);
+            System.out.println(joinedServers);
+            return new ResponseEntity<List<Server>>(joinedServers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println("Exception in getJoinedServers(): " + e.getMessage());
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

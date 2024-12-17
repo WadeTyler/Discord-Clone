@@ -1,12 +1,14 @@
 
 import { IconBrandDiscordFilled, IconPlus } from '@tabler/icons-react';
-import { servers } from '../../constants/testData';
 import ServerButton from './ServerButton';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { Server } from '../../types/types';
 
 const ServerList = () => {
 
+  const {data:servers} = useQuery<Server[] | null>({ queryKey: ['joinedServers'] });
   const [hoveringNewServer, setNewServerHover] = useState<boolean>(false);
 
   return (
@@ -21,7 +23,7 @@ const ServerList = () => {
 
       {/* Server List */}
       <div className="flex flex-col gap-2 items-center h-fit w-full relative">
-        {servers.map(server => (
+        {servers?.map(server => (
           <ServerButton key={server.serverID} server={server} />
         ))}
 
@@ -30,7 +32,6 @@ const ServerList = () => {
         onMouseLeave={() => setNewServerHover(false)}
         className="w-12 h-12 flex items-center justify-center relative cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 hover:bg-green-500 hover:text-white bg-primary p-2 text-green-500">
           <IconPlus/>
-
           {hoveringNewServer && <NewServerLabel />}
 
         </div>
