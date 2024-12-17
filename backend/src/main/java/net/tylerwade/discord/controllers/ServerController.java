@@ -162,6 +162,7 @@ public class ServerController {
         }
     }
 
+    // Create a channel in the specified server
     @PostMapping(path="/{serverID}/channels/create")
     public ResponseEntity createChannel(@PathVariable String serverID, @RequestBody Channel channelRequest, @CookieValue("authToken") String authToken) {
         try {
@@ -217,6 +218,43 @@ public class ServerController {
 
         } catch (Exception e) {
             System.out.println("Exception in createChannel(): " + e.getMessage());
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Delete a channel in the specified server
+    @DeleteMapping(path="/{serverID}/channels/{channelID}/delete")
+    public ResponseEntity deleteChannel(@PathVariable String serverID, @PathVariable String channelID, @CookieValue("authToken") String authToken) {
+        try {
+
+            String userID = jwtUtil.getValue(authToken);
+
+            // Check if server exists
+            if (!serverRepository.existsById(serverID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
+
+            // Check if channel exists
+            if (!channelRepository.existsById(channelID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel not found."), HttpStatus.NOT_FOUND);
+
+            // Check if channel is inside that server
+            Channel channel = channelRepository.findById(channelID).get();
+
+            if (!channel.getServerID().equals(serverID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel not found in that server."), HttpStatus.NOT_FOUND);
+
+            // Check if the user is the owner of the server
+            Server server = serverRepository.findById(serverID).get();
+            if (!server.getServerOwner().equals(userID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You do not have permissions to edit this server."), HttpStatus.UNAUTHORIZED);
+
+            // Delete Channel
+            channelRepository.deleteById(channelID);
+
+            return new ResponseEntity<SuccessMessage>(new SuccessMessage("Channel deleted."), HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println("Exception in deleteChannel(): " + e.getMessage());
             return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
