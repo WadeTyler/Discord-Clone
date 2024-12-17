@@ -18,6 +18,7 @@ password: ****
 | email    | varchar(50)  | NO   |     | NULL    |       |
 | password | varchar(200) | NO   |     | NULL    |       |
 | tag      | varchar(4)   | NO   |     | NULL    |       |
+| status   | varchar(50)  | YES  |     | Offline |       |
 +----------+--------------+------+-----+---------+-------+
 
 
@@ -40,6 +41,7 @@ password: ****
 | serverID           | varchar(512) | NO   | MUL | NULL    |       |
 | channelDescription | varchar(100) | YES  |     | NULL    |       |
 | channelOrder       | int          | NO   |     | NULL    |       |
+| type               | varchar(10)  | NO   |     | NULL    |       |
 +--------------------+--------------+------+-----+---------+-------+
 
 #### messages
