@@ -5,6 +5,7 @@ export type User = {
   email: string;
   tag: string;
   status: string;
+  avatar: string;
 }
 
 export type Server = {
@@ -21,4 +22,15 @@ export type Channel = {
   channelDescription?: string;
   channelOrder: number;
   type: 'text' | 'voice';
+}
+
+
+export type Message = {
+  messageID: number;
+  senderID: string;
+  senderUsername: string;
+  timestamp: string;
+  channelID: string;
+  content: string;
+  senderAvatar: string;
 }

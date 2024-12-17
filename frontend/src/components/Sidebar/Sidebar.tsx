@@ -4,27 +4,28 @@ import { Channel, Server } from "../../types/types";
 import { authUser, server1Channels, servers } from "../../constants/testData";
 import { IconChevronDown, IconCompassFilled, IconHeadphonesFilled, IconMicrophoneFilled, IconSettingsFilled } from "@tabler/icons-react";
 import ChannelButton from "./ChannelButton";
+import { useAppContext } from "../../context/AppContext";
 
 const Sidebar = () => {
 
-  const [selectedServer, setSelectedServer] = useState<Server>(servers[0]);
+  const { currentServer, setCurrentServer } = useAppContext();
 
   // Hover states
   const [hoveringUserInfo, setHoveringUserInfo] = useState(false);
 
   return (
-    <div className="w-72 h-screen bg-secondary flex relative">
+    <div className="min-w-72 w-72 h-screen bg-secondary flex relative">
       <ServerList />
 
       {/* Show the ServerBar for the selected server */}
-      {selectedServer && <ServerBar server={selectedServer} /> }
+      {currentServer && <ServerBar server={currentServer} /> }
 
       {/* Bottom Bar */}
       <div className="absolute bottom-0 w-full h-16 flex items-center bg-tertiary">
 
         {/* Nav Button */}
         <div className="w-16 px-4 h-full bg-tertiary flex items-center justify-center">
-          <div className="w-12 p-1 flex items-center justify-center bg-primary cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300" >
+          <div className="min-w-12 w-12 p-2 flex items-center justify-center bg-primary hover:bg-green-500 hover:text-white cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300" >
             <IconCompassFilled className="text-4xl w-full h-full"/>
           </div>
         </div>
@@ -76,8 +77,6 @@ const ServerBar = ({server}: {
 }) => {
 
   const [channels, setChannels] = useState<Channel[]>(server1Channels);
-  const [selectedTextChannel, setSelectedTextChannel] = useState<Channel | null>(null);
-  const [selectedVoiceChannel, setSelectedVoiceChannel] = useState<Channel | null>(null);
 
   return (
 
@@ -91,7 +90,7 @@ const ServerBar = ({server}: {
       {/* Text Channels */}
       <div className="flex flex-col gap-1 p-2">
         {channels.map((channel) => (
-          <ChannelButton key={channel.channelID} channel={channel} setSelectedTextChannel={setSelectedTextChannel} selectedTextChannel={selectedTextChannel} selectedVoiceChannel={selectedVoiceChannel} setSelectedVoiceChannel={setSelectedVoiceChannel} />
+          <ChannelButton key={channel.channelID} channel={channel} />
         ))}
       </div>
 

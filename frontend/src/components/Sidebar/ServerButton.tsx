@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Server } from "../../types/types"
+import { motion } from "framer-motion";
 
 const ServerButton = ({server}: {server: Server}) => {
 
@@ -26,9 +27,13 @@ const ServerLabel = ({server}: {server: Server}) => {
 
 
   return (
-    <div className="bg-tertiary absolute top-1/2 -translate-y-1/2 left-[150%] z-50 max-w-24 px-2 py-1 rounded">
+    <motion.div 
+    initial={{ scale: 0.9 }}
+    whileInView={{ scale: 1 }}
+    transition={{ duration: .2 }}
+    className="bg-tertiary absolute top-1/2 -translate-y-1/2 left-[150%] z-50 max-w-24 px-2 py-1 rounded">
       <p className="text-sm w-full whitespace-nowrap">{server.serverName}</p>
-    </div>
+    </motion.div>
   )
 
 }
