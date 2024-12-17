@@ -82,6 +82,9 @@ const ServerBar = () => {
   // Current Server
   const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
 
+  // Current Text Channel
+  const { data:currentTextChannel } = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
+
   useEffect(() => {
     console.log("Current Server: ", currentServer);
   }, [currentServer]);
@@ -120,8 +123,15 @@ const ServerBar = () => {
 
   useEffect(() => {
     // Invalidate channels query on server change
-    queryClient.invalidateQueries({ queryKey: ['channels'] });
-  }, [currentServer]);
+    if (currentServer?.serverID !== channels?.[0].serverID)
+      queryClient.invalidateQueries({ queryKey: ['channels'] });
+
+    // Set the first channel as the current channel
+    if (channels && (!currentTextChannel || currentTextChannel.serverID !== channels[0].serverID)) {
+      queryClient.setQueryData<Channel>(['currentTextChannel'], channels.filter(channel => channel.type === 'text')[0]);
+    }
+
+  }, [currentServer, channels]);
 
 
   return (
