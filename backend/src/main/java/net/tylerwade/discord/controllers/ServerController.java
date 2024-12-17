@@ -3,9 +3,11 @@ package net.tylerwade.discord.controllers;
 import net.tylerwade.discord.lib.ErrorMessage;
 import net.tylerwade.discord.lib.SuccessMessage;
 import net.tylerwade.discord.lib.util.JwtUtil;
+import net.tylerwade.discord.models.Channel;
 import net.tylerwade.discord.models.Server;
 import net.tylerwade.discord.models.ServerJoin;
 import net.tylerwade.discord.models.ServerJoinPK;
+import net.tylerwade.discord.repositories.ChannelRepository;
 import net.tylerwade.discord.repositories.ServerJoinsRepository;
 import net.tylerwade.discord.repositories.ServerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,9 @@ public class ServerController {
 
     @Autowired
     private ServerJoinsRepository serverJoinsRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -153,6 +158,84 @@ public class ServerController {
 
         } catch (Exception e) {
             System.out.println("Exception in getJoinedServers(): " + e.getMessage());
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping(path="/{serverID}/channels/create")
+    public ResponseEntity createChannel(@PathVariable String serverID, @RequestBody Channel channelRequest, @CookieValue("authToken") String authToken) {
+        try {
+            String userID = jwtUtil.getValue(authToken);
+
+            // Check if server exists
+            if (!serverRepository.existsById(serverID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
+
+            // Check if user is in server
+            if (serverJoinsRepository.findByServerIDAndUserID(serverID, userID).isEmpty())
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.UNAUTHORIZED);
+
+            // Check if user owns the server
+            Server server = serverRepository.findById(serverID).get();
+            if (!server.getServerOwner().equals(userID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You do not have permissions to edit this server."), HttpStatus.UNAUTHORIZED);
+
+            // Check for channel name
+            if (channelRequest.getChannelName().isEmpty())
+                return new ResponseEntity(new ErrorMessage("A channel name is required."), HttpStatus.BAD_REQUEST);
+
+            // Check for channel type
+            if (channelRequest.getType().isEmpty())
+                return new ResponseEntity(new ErrorMessage("A channel type is required."), HttpStatus.BAD_REQUEST);
+
+            // Check is valid
+            if (!channelRequest.getType().equals("voice") && !channelRequest.getType().equals("text"))
+                return new ResponseEntity(new ErrorMessage("Invalid channel type. Must be 'text' or 'voice'"), HttpStatus.BAD_REQUEST);
+
+            List<Channel> channels = channelRepository.findByServerID(serverID);
+
+            // Check if name already exists
+            for (Channel channel : channels) {
+                if (channel.getChannelName().equals(channelRequest.getChannelName()) && channel.getType().equals(channelRequest.getType())) {
+                    return new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel name already exists."), HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            // Get channel order
+
+            int channelOrder = channels.size() + 1;
+            String channelID = UUID.randomUUID().toString();
+            String channelDescription = channelRequest.getChannelDescription();
+            String type = channelRequest.getType();
+            String channelName = channelRequest.getChannelName();
+
+            // Save channel
+            Channel newChannel = new Channel(channelID, channelName, serverID, channelDescription, channelOrder, type);
+            channelRepository.save(newChannel);
+
+            return new ResponseEntity<Channel>(newChannel, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println("Exception in createChannel(): " + e.getMessage());
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Get channels in a server
+    @GetMapping(path="/{serverID}/channels")
+    public ResponseEntity getChannelsInServer(@PathVariable String serverID) {
+        try {
+            // Check if real serverID
+            if (!serverRepository.existsById(serverID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
+
+            // Check for channels
+            List<Channel> channels = channelRepository.findByServerID(serverID);
+
+            return new ResponseEntity<List<Channel>>(channels, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println("Exception in getChannelsInServer(): " + e.getMessage());
             return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

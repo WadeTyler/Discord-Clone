@@ -14,17 +14,19 @@ public class Channel {
     private String channelName;
     private String serverID;
     private String channelDescription;
-    private String channelOrder;
+    private int channelOrder;
+    private String type;
 
     public Channel() {
     }
 
-    public Channel(String channelID, String channelName, String serverID, String channelDescription, String channelOrder) {
+    public Channel(String channelID, String channelName, String serverID, String channelDescription, int channelOrder, String type) {
         this.channelID = channelID;
         this.channelName = channelName;
         this.serverID = serverID;
         this.channelDescription = channelDescription;
         this.channelOrder = channelOrder;
+        this.type = type;
     }
 
 
@@ -60,11 +62,19 @@ public class Channel {
         this.channelDescription = channelDescription;
     }
 
-    public String getChannelOrder() {
+    public int getChannelOrder() {
         return channelOrder;
     }
 
-    public void setChannelOrder(String channelOrder) {
+    public void setChannelOrder(int channelOrder) {
         this.channelOrder = channelOrder;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
