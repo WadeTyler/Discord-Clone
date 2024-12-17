@@ -13,8 +13,11 @@ export default {
         tertiary: '#1E2022',
         accent: '#d3d3d3',
         accentDark: '#B5BAC1',
+        accentBlue: '#5865F2'
       }
     },
   },
-  plugins: [],
+  plugins: [
+    require('daisyui'),
+  ],
 }

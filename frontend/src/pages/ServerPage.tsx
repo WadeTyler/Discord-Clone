@@ -1,7 +1,6 @@
 // Server Page. Used for sending messages in the server and joining voice channels.
 
 import { SetStateAction, useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
 import { useAppContext } from "../context/AppContext";
 import { Channel, Message, Server, User } from "../types/types";
 import { IconCrown, IconHash, IconPinFilled, IconPlus, IconSearch, IconUsers } from "@tabler/icons-react";

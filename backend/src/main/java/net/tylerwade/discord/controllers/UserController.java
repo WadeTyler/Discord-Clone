@@ -74,7 +74,7 @@ public class UserController {
     @PostMapping(path="/login")
     public @ResponseBody ResponseEntity login(@RequestBody User loginAttempt, HttpServletResponse response) {
         try {
-            System.out.println("attempt");
+            System.out.println("login attempt");
             // Check for email and password
             if (loginAttempt.getEmail().isEmpty() || loginAttempt.getPassword().isEmpty())
                 return new ResponseEntity(new ErrorMessage("Email and Password are both required."), HttpStatus.BAD_REQUEST);
@@ -184,7 +184,7 @@ public class UserController {
         Cookie cookie = new Cookie("authToken", authToken);
         cookie.setMaxAge(604800);   // 7 days
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setSecure(false);       // set to true for production
         cookie.setPath("/");
 
         return cookie;
@@ -194,7 +194,7 @@ public class UserController {
         Cookie cookie = new Cookie("authToken", "");
         cookie.setMaxAge(0);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setSecure(false);    // set to true for production
         cookie.setPath("/");
 
         return cookie;
