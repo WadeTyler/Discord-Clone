@@ -4,7 +4,7 @@ import { Routes, Route } from 'react-router-dom'
 import ServerPage from './pages/ServerPage'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import LoginPage from './pages/LoginPage'
-import { Server, User } from './types/types'
+import { Channel, Server, User } from './types/types'
 import { useEffect } from 'react'
 import { LoadingSpinnerLG } from './components/lib/util/LoadingSpinner'
 import toast from 'react-hot-toast'
@@ -61,20 +61,28 @@ const App = () => {
         }
       }
     });
-  
-    useEffect(() => {
-      console.log("joinedServers: ", joinedServers);
-    }, [joinedServers]);
+
+  const { data:currentServer } = useQuery<Server | null>({ queryKey: ['currentServer'] });
+  const { data:currentTextChannel } = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
+  const { data:currentVoiceChannel } = useQuery<Channel | null>({ queryKey: ['currentVoiceChannel'] });
+
+  useEffect(() => {
+    console.log("joinedServers: ", joinedServers);
+  }, [joinedServers]);
 
   useEffect(() => {
     console.log("authUser: ", authUser);
 
     // Set the server to the first server in the joined servers list
-    if (authUser && joinedServers) {
-      console.log("Setting current server to: ", joinedServers[0]);
+    if (authUser && joinedServers && currentServer === null) {
+      console.log("Setting initial server to: ", joinedServers[0]);
       queryClient.setQueryData<Server>(['currentServer'], joinedServers[0]);
     }
-  }, [authUser, joinedServers]);
+
+    console.log("Current Server: ", currentServer);
+    console.log("Current Text Channel: ", currentTextChannel);
+    console.log("Current Voice Channel: ", currentVoiceChannel);
+  }, [authUser, joinedServers, currentServer, currentTextChannel, currentVoiceChannel]);
 
 
   if (loadingAuthUser) {
