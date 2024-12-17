@@ -55,6 +55,10 @@ public class ServerController {
             Server newServer = new Server(serverID, serverName, serverOwner, serverIcon);
             serverRepository.save(newServer);
 
+            // Join server
+            ServerJoin serverJoin = new ServerJoin(serverID, serverOwner);
+            serverJoinsRepository.save(serverJoin);
+
             return new ResponseEntity<Server>(newServer, HttpStatus.OK);
 
         } catch (Exception e) {
@@ -92,7 +96,6 @@ public class ServerController {
         }
     }
 
-
     // Join a Server
     @PostMapping(path="/{serverID}/join")
     public ResponseEntity joinServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
@@ -120,7 +123,6 @@ public class ServerController {
         }
     }
 
-
     // Leave a Server
     @DeleteMapping(path="/{serverID}/leave")
     public ResponseEntity leaveServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
@@ -136,6 +138,10 @@ public class ServerController {
             if (serverJoinsRepository.findByServerIDAndUserID(serverID, userID).isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.BAD_REQUEST);
 
+            // Check if owner
+            if (serverRepository.findById(serverID).get().getServerOwner().equals(userID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You cannot leave a server you own."), HttpStatus.BAD_REQUEST);
+            
             // Delete serverJoin
             serverJoinsRepository.deleteByServerIDAndUserID(serverID, userID);
 
@@ -261,13 +267,20 @@ public class ServerController {
 
     // Get channels in a server
     @GetMapping(path="/{serverID}/channels")
-    public ResponseEntity getChannelsInServer(@PathVariable String serverID) {
+    public ResponseEntity getChannelsInServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
         try {
+
+            String userID = jwtUtil.getValue(authToken);
+
             // Check if real serverID
             if (!serverRepository.existsById(serverID))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
 
-            // Check for channels
+            // Check if user is in the server
+            if (serverJoinsRepository.findByServerIDAndUserID(serverID, userID).isEmpty())
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.UNAUTHORIZED);
+
+            // Get Channels
             List<Channel> channels = channelRepository.findByServerID(serverID);
 
             return new ResponseEntity<List<Channel>>(channels, HttpStatus.OK);

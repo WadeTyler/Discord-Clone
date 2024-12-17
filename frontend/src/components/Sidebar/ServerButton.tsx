@@ -1,18 +1,21 @@
 import { useState } from "react"
 import { Server } from "../../types/types"
 import { motion } from "framer-motion";
-import { useAppContext } from "../../context/AppContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ServerButton = ({server}: {server: Server}) => {
 
   const [hovering, setHovering] = useState<boolean>(false);
 
-  const { setCurrentServer } = useAppContext();
+  const queryClient = useQueryClient();
 
   return (
     <div className="relative">
       <div 
-      onClick={() => setCurrentServer(server)}
+      onClick={() => {
+        queryClient.setQueryData<Server>(['currentServer'], server);
+        console.log("ServerButton: Setting current server to: ", server);
+      }}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       className="w-12 h-12 flex items-center justify-center relative cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 bg-primary p-2">

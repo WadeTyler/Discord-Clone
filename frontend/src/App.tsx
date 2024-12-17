@@ -68,7 +68,13 @@ const App = () => {
 
   useEffect(() => {
     console.log("authUser: ", authUser);
-  }, [authUser]);
+
+    // Set the server to the first server in the joined servers list
+    if (authUser && joinedServers) {
+      console.log("Setting current server to: ", joinedServers[0]);
+      queryClient.setQueryData<Server>(['currentServer'], joinedServers[0]);
+    }
+  }, [authUser, joinedServers]);
 
 
   if (loadingAuthUser) {

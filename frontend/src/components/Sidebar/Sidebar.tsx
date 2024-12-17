@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ServerList from "./ServerList"
 import { Channel, Server } from "../../types/types";
-import { authUser, server1Channels, servers } from "../../constants/testData";
+import { authUser } from "../../constants/testData";
 import { IconChevronDown, IconCompassFilled, IconHeadphonesFilled, IconMicrophoneFilled, IconSettingsFilled } from "@tabler/icons-react";
 import ChannelButton from "./ChannelButton";
-import { useAppContext } from "../../context/AppContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const Sidebar = () => {
 
-  const { currentServer, setCurrentServer } = useAppContext();
+  const {data:currentServer } = useQuery<Server | null>({ queryKey: ['currentServer'] });
 
   // Hover states
   const [hoveringUserInfo, setHoveringUserInfo] = useState(false);
@@ -18,7 +19,7 @@ const Sidebar = () => {
       <ServerList />
 
       {/* Show the ServerBar for the selected server */}
-      {currentServer && <ServerBar server={currentServer} /> }
+      {currentServer && <ServerBar /> }
 
       {/* Bottom Bar */}
       <div className="absolute bottom-0 w-full h-16 flex items-center bg-tertiary">
@@ -72,24 +73,69 @@ const Sidebar = () => {
 
 export default Sidebar
 
-const ServerBar = ({server}: {
-  server: Server;
-}) => {
+const ServerBar = () => {
 
-  const [channels, setChannels] = useState<Channel[]>(server1Channels);
+  // QueryClient
+  const queryClient = useQueryClient();
+  const API_URL = import.meta.env.VITE_API_URL;
+  
+  // Current Server
+  const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
+
+  useEffect(() => {
+    console.log("Current Server: ", currentServer);
+  }, [currentServer]);
+
+  // Fetch channels
+  const { data: channels } = useQuery<Channel[]>({
+    queryKey: ['channels'],
+    queryFn: async () => {
+      try {
+        if (!currentServer) 
+          throw new Error("No server selected");
+
+        const response = await fetch(`${API_URL}/servers/${currentServer.serverID}/channels`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+
+        return data;
+
+      } catch (error) {
+        toast.error((error as Error).message);
+        return null;
+      }
+    }
+  });
+
+
+  useEffect(() => {
+    // Invalidate channels query on server change
+    queryClient.invalidateQueries({ queryKey: ['channels'] });
+  }, [currentServer]);
+
 
   return (
 
     <div className="h-full w-full bg-secondary flex flex-col gap-4">
       {/* Server Info */}
       <div className="h-12 w-full flex py-2 px-4 shadow-md border-b-tertiary border-b items-center justify-between">
-        <p>{server.serverName}</p>
+        <p>{currentServer?.serverName}</p>
         <IconChevronDown />
       </div>
 
       {/* Text Channels */}
       <div className="flex flex-col gap-1 p-2">
-        {channels.map((channel) => (
+        {channels?.map((channel) => (
           <ChannelButton key={channel.channelID} channel={channel} />
         ))}
       </div>

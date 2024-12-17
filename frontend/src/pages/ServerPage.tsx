@@ -1,28 +1,22 @@
 // Server Page. Used for sending messages in the server and joining voice channels.
 
-import { SetStateAction, useEffect, useState } from "react"
-import { useAppContext } from "../context/AppContext";
+import { SetStateAction, useState } from "react"
 import { Channel, Message, Server, User } from "../types/types";
 import { IconCrown, IconHash, IconPinFilled, IconPlus, IconSearch, IconUsers } from "@tabler/icons-react";
 import { server1GeneralMessages, server1Users } from "../constants/testData";
 import MessageComponent from "../components/MessageComponent";
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const ServerPage = () => {
 
-  const { currentServer, currentTextChannel,  setCurrentServer } = useAppContext();
   const [showUserList, setShowUserList] = useState<boolean>(true);
-
-  const API_URL = import.meta.env.VITE_API_URL;
 
   return (
     <div className="flex flex-col w-full h-screen relative">
-      <ChannelHeaderBar currentTextChannel={currentTextChannel} setShowUserList={setShowUserList} showUserList={showUserList} />
+      <ChannelHeaderBar setShowUserList={setShowUserList} showUserList={showUserList} />
       <div className="flex h-full w-full">
-        <Messages currentServer={currentServer} currentTextChannel={currentTextChannel} />
-        {showUserList && <UsersList currentServer={currentServer} />}
+        <Messages  />
+        {showUserList && <UsersList />}
       </div>
     </div>
   )
@@ -30,11 +24,12 @@ const ServerPage = () => {
 
 export default ServerPage
 
-const ChannelHeaderBar = ({currentTextChannel, setShowUserList, showUserList}: {
-  currentTextChannel: Channel | null;
+const ChannelHeaderBar = ({ setShowUserList, showUserList}: {
   setShowUserList: React.Dispatch<SetStateAction<boolean>>;
   showUserList: boolean;
 }) => {
+
+  const { data:currentTextChannel } = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
 
   return (
     <div className="h-12 w-full flex py-2 px-4 shadow-md border-b-tertiary border-b items-center justify-between">
@@ -66,7 +61,9 @@ const ChannelHeaderBar = ({currentTextChannel, setShowUserList, showUserList}: {
 
 }
 
-const UsersList = ({currentServer}: {currentServer: Server | null}) => {
+const UsersList = () => {
+
+  const { data:currentServer } = useQuery<Server | null>({ queryKey: ['currentServer'] });
 
   const [users, setUsers] = useState<User[]>(server1Users);
 
@@ -104,10 +101,9 @@ const UsersList = ({currentServer}: {currentServer: Server | null}) => {
   )
 }
 
-const Messages = ({ currentServer, currentTextChannel }: {
-  currentServer: Server | null;
-  currentTextChannel: Channel | null;
-}) => {
+const Messages = () => {
+
+  const { data: currentTextChannel }  = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
 
   const [messages, setMessages] = useState<Message[]>(server1GeneralMessages);
 
@@ -124,7 +120,7 @@ const Messages = ({ currentServer, currentTextChannel }: {
       {/* Input Bar */}
       <div className="w-full bg-primaryLight p-2 rounded flex items-center gap-3">
         <button className="flex items-center justify-center bg-accentDark text-primaryLight rounded-full"><IconPlus /></button>
-        <input type="text" className="w-full h-full bg-transparent text-sm placeholder:text-accentDark focus:outline-none" placeholder={`Message #${currentTextChannel?.channelName}`}/>
+        <input type="text" className="w-full h-full bg-transparent text-sm placeholder:text-accentDark focus:outline-none" placeholder={`Message #${currentTextChannel?.channelName}`} onChange={(e) => setUserInput(e.target.value)}/>
       </div>
       
     </div>

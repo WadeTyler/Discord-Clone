@@ -1,6 +1,4 @@
 import { Message } from "../types/types"
-import { authUser } from "../constants/testData";
-
 
 const MessageComponent = ({message}: {
   message: Message;
