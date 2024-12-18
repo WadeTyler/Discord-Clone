@@ -107,12 +107,17 @@ const App = () => {
 
   // Disconnect WebSocket Client
   const disconnectClient =() => {
-    client.publish({
-      destination: "/app/onDisconnect",
-      body: authUser?.userID,
-    });
-    console.log("Disconnected from WebSocket Broker");
-  }
+
+    if (client.connected) {
+      client.publish({
+        destination: "/app/onDisconnect",
+        body: authUser?.userID,
+      });
+      console.log("Disconnected from WebSocket Broker");
+    }
+
+    
+  };
 
   useEffect(() => {
     if (authUser && !client.active) {
@@ -139,6 +144,15 @@ const App = () => {
       }
     };
   }, [authUser]);
+
+  useEffect(() => {
+    if (client.connected) {
+      client.subscribe('/topic/error', (response) => {
+        const data = JSON.parse(response.body).body;
+        toast.error(data.error);
+      })
+    }
+  }, [client])
 
   /* --------------------------------------------------------------------------------------- */
 

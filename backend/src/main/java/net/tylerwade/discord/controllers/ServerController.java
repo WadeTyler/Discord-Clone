@@ -8,6 +8,7 @@ import net.tylerwade.discord.models.Server;
 import net.tylerwade.discord.models.ServerJoin;
 import net.tylerwade.discord.models.ServerJoinPK;
 import net.tylerwade.discord.repositories.ChannelRepository;
+import net.tylerwade.discord.repositories.MessageRepository;
 import net.tylerwade.discord.repositories.ServerJoinsRepository;
 import net.tylerwade.discord.repositories.ServerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ public class ServerController {
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -169,7 +173,6 @@ public class ServerController {
             String userID = jwtUtil.getValue(authToken);
 
             List<Server> joinedServers = serverRepository.findAllJoinedServers(userID);
-            System.out.println(joinedServers);
             return new ResponseEntity<List<Server>>(joinedServers, HttpStatus.OK);
 
         } catch (Exception e) {
@@ -263,6 +266,9 @@ public class ServerController {
             Server server = serverRepository.findById(serverID).get();
             if (!server.getServerOwner().equals(userID))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You do not have permissions to edit this server."), HttpStatus.UNAUTHORIZED);
+
+            // Delete all messages in channel
+            messageRepository.deleteByChannelID(channelID);
 
             // Delete Channel
             channelRepository.deleteById(channelID);

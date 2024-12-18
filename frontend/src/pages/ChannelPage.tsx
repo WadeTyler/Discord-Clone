@@ -1,11 +1,13 @@
 // Server Page. Used for sending messages in the server and joining voice channels.
 
-import { SetStateAction, useState } from "react"
+import { SetStateAction, useEffect, useState } from "react"
 import { Channel, Message, Server, User } from "../types/types";
 import { IconCrown, IconHash, IconPinFilled, IconPlus, IconSearch, IconUsers } from "@tabler/icons-react";
 import { server1GeneralMessages, server1Users } from "../constants/testData";
 import MessageComponent from "../components/MessageComponent";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useWebSocket } from "../context/WebSocketContext";
+import toast from "react-hot-toast";
 
 const ChannelPage = () => {
 
@@ -103,26 +105,138 @@ const UsersList = () => {
 
 const Messages = () => {
 
-  const { data: currentTextChannel }  = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
-
-  const [messages, setMessages] = useState<Message[]>(server1GeneralMessages);
-
+  // States
+  const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState<string>('');
 
+  // Current Text Channel
+  const { data: currentTextChannel }  = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
+
+  // AuthUser
+  const { data: authUser } = useQuery<User | null>({ queryKey: ['authUser'] });
+
+  // WebSocket Client
+  const client = useWebSocket();
+
+  // Load Messages on Channel Change
+  useEffect(() => {
+    // Must have client and a currentTextChannel
+    if (client.connected && currentTextChannel && authUser) {
+      
+      // Set messages to empty
+      setMessages([]);
+
+      // Request All previous Messages
+      client.publish({
+        destination: '/app/getMessages',
+        body: JSON.stringify({
+          channelID: currentTextChannel.channelID,
+          userID: authUser.userID,
+        })
+      });
+
+      // Reveive All previous Messages
+      client.subscribe(`/topic/getMessages/${currentTextChannel.channelID}/${authUser.userID}`, (message) => {
+        const prevMessages: Message[] = JSON.parse(message.body).body;
+        console.log("Previous Messages: ", prevMessages);
+        setMessages(prevMessages);
+      });
+
+      // Receive new messages to the current Channel
+      client.subscribe(`/topic/newMessage/${currentTextChannel?.channelID}`, (response) => {
+
+        const data = JSON.parse(response.body);
+        if (data.error)
+          throw new Error(data.error);
+
+        const newMessage: Message = JSON.parse(response.body).body;
+        console.log("New Message: ", newMessage);
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+      });
+    }
+
+    // Cleanup
+    return () => {
+      if (client.connected) {
+        client.unsubscribe(`/topic/getMessages/${currentTextChannel?.channelID}/${authUser?.userID}`);
+        client.unsubscribe(`/topic/newMessage/${currentTextChannel?.channelID}`);
+      }
+    }
+  }, [currentTextChannel, client, authUser]);
+
+  // Send Message
+  const handleSubmitMessage = () => {
+    try {
+
+      if (!userInput || !currentTextChannel || !authUser)
+        return;
+
+      // Create Message Request Object
+      const messageRequest = {
+        senderID: authUser?.userID,
+        channelID: currentTextChannel?.channelID,
+        content: userInput,
+      }
+
+      // Send Message
+      client.publish({
+        destination: '/app/newMessage',
+        body: JSON.stringify(messageRequest)
+      });
+
+      setUserInput('');
+
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  }
+
+  const smoothScrollToBottom = (messageContainer: HTMLDivElement) => {
+    messageContainer.scrollTo({
+      top: messageContainer.scrollHeight,
+      behavior: 'smooth'
+    });
+  }
+
+  const snapScrollToBottom = (messageContainer: HTMLDivElement) => {
+    messageContainer.scrollTo(0, messageContainer.scrollHeight);
+  }
+
+  // Scroll To bottom on new message
+  useEffect(() => {
+    const messageContainer = document.querySelector('.messages-container');
+
+    if (messageContainer)
+      snapScrollToBottom(messageContainer as HTMLDivElement);
+    
+  }, [messages]);
+
+
   return (
-    <div className="w-full h-full flex flex-col gap-4 p-4 overflow-y-auto justify-end relative">
+    <div className="w-full h-full flex flex-col gap-4 pt-4 px-4 relative">
       
       {/* Map Messages */}
-      {messages.map((message) => (
-       <MessageComponent key={message.messageID} message={message} /> 
-      ))}
+      <div className="messages-container w-full max-h-[calc(100vh-8rem)] flex-1 overflow-y-auto">
+        <div className="flex flex-col gap-4 justify-end">
+          {messages.map((message: Message) => (
+          <MessageComponent key={message.messageID} message={message} /> 
+          ))}
+        </div>
+      </div>
 
       {/* Input Bar */}
-      <div className="w-full bg-primaryLight p-2 rounded flex items-center gap-3">
-        <button className="flex items-center justify-center bg-accentDark text-primaryLight rounded-full"><IconPlus /></button>
-        <input type="text" className="w-full h-full bg-transparent text-sm placeholder:text-accentDark focus:outline-none" placeholder={`Message #${currentTextChannel?.channelName}`} onChange={(e) => setUserInput(e.target.value)}/>
-      </div>
-      
+      <form 
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmitMessage();
+      }}
+      className="w-full bg-primaryLight p-2 rounded flex items-center gap-3">
+        <div className="flex items-center justify-center bg-accentDark text-primaryLight rounded-full cursor-pointer"><IconPlus /></div>
+        <input type="text" 
+        value={userInput}
+        className="w-full h-full bg-transparent text-sm placeholder:text-accentDark focus:outline-none" placeholder={`Message #${currentTextChannel?.channelName}`} onChange={(e) => setUserInput(e.target.value)}/>
+      </form>
+    
     </div>
   );
 

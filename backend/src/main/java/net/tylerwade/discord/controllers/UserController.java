@@ -74,7 +74,6 @@ public class UserController {
     @PostMapping(path="/login")
     public @ResponseBody ResponseEntity login(@RequestBody User loginAttempt, HttpServletResponse response) {
         try {
-            System.out.println("login attempt");
             // Check for email and password
             if (loginAttempt.getEmail().isEmpty() || loginAttempt.getPassword().isEmpty())
                 return new ResponseEntity(new ErrorMessage("Email and Password are both required."), HttpStatus.BAD_REQUEST);
@@ -111,11 +110,7 @@ public class UserController {
             return new ResponseEntity(new ErrorMessage("No authToken provided. Please sign in."), HttpStatus.BAD_REQUEST);
         }
 
-        System.out.println("authToken: " + authToken);
-
         String userID = jwtUtil.getValue(authToken);
-
-        System.out.println("userID: " + userID);
 
         if (userID.isEmpty()) {
             return new ResponseEntity(new ErrorMessage("Invalid userID"), HttpStatus.BAD_REQUEST);
