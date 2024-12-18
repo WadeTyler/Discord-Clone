@@ -7,7 +7,7 @@ import { server1GeneralMessages, server1Users } from "../constants/testData";
 import MessageComponent from "../components/MessageComponent";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-const ServerPage = () => {
+const ChannelPage = () => {
 
   const [showUserList, setShowUserList] = useState<boolean>(true);
 
@@ -22,7 +22,7 @@ const ServerPage = () => {
   )
 }
 
-export default ServerPage
+export default ChannelPage
 
 const ChannelHeaderBar = ({ setShowUserList, showUserList}: {
   setShowUserList: React.Dispatch<SetStateAction<boolean>>;

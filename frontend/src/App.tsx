@@ -1,20 +1,19 @@
 
 import Sidebar from './components/Sidebar/Sidebar'
 import { Routes, Route } from 'react-router-dom'
-import ServerPage from './pages/ServerPage'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import LoginPage from './pages/LoginPage'
 import { Channel, Server, User } from './types/types'
 import { useEffect } from 'react'
 import { LoadingSpinnerLG } from './components/lib/util/LoadingSpinner'
 import toast from 'react-hot-toast'
-import { Client } from '@stomp/stompjs'
+import { useWebSocket } from './context/WebSocketContext'
+import ChannelPage from './pages/ChannelPage'
 
 const App = () => {
 
   const queryClient = useQueryClient();
   const API_URL = import.meta.env.VITE_API_URL;
-  const BROKER_URL = import.meta.env.VITE_BROKER_URL; 
 
 
   // Auth User
@@ -70,34 +69,6 @@ const App = () => {
   const { data:currentTextChannel } = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
   const { data:currentVoiceChannel } = useQuery<Channel | null>({ queryKey: ['currentVoiceChannel'] });
 
-  // StompJS WebSocket Client
-  const client = new Client({
-    brokerURL: BROKER_URL,
-    debug: (str) => {
-      console.log(str);
-    }
-  });
-
-  client.onConnect = () => {
-    console.log("Connected to WebSocket Broker");
-    client.publish({
-      destination: "/app/onConnect",
-      body: authUser?.userID,
-    });
-  };
-
-  client.onDisconnect = () => {
-    disconnectClient();
-  };
-
-  const disconnectClient =() => {
-    client.publish({
-      destination: "/app/onDisconnect",
-      body: authUser?.userID,
-    });
-    console.log("Disconnected from WebSocket Broker");
-  }
-
   useEffect(() => {
     console.log("authUser: ", authUser);
 
@@ -107,19 +78,48 @@ const App = () => {
       queryClient.setQueryData<Server>(['currentServer'], joinedServers[0]);
     }
 
-
-
+    // Debugging
     console.log("Current Server: ", currentServer);
     console.log("Current Text Channel: ", currentTextChannel);
     console.log("Current Voice Channel: ", currentVoiceChannel);
 
   }, [authUser, joinedServers, currentServer, currentTextChannel, currentVoiceChannel]);
 
+
+  /* ----------------------------- Web Socket ----------------------------- */
+
+  // StompJS WebSocket Client
+  const client = useWebSocket();
+
+  // On Connecting to WebSocket Broker
+  client.onConnect = () => {
+    console.log("Connected to WebSocket Broker");
+    client.publish({
+      destination: "/app/onConnect",
+      body: authUser?.userID,
+    });
+  };
+
+  // On Disconnecting from WebSocket Broker
+  client.onDisconnect = () => {
+    disconnectClient();
+  };
+
+  // Disconnect WebSocket Client
+  const disconnectClient =() => {
+    client.publish({
+      destination: "/app/onDisconnect",
+      body: authUser?.userID,
+    });
+    console.log("Disconnected from WebSocket Broker");
+  }
+
   useEffect(() => {
     if (authUser && !client.active) {
       client.activate();
     }
 
+    // Disconnect WebSocket Client on page unload
     const handleBeforeUnload = () => {
       if (client.active) {
         disconnectClient();
@@ -130,7 +130,6 @@ const App = () => {
     
     window.addEventListener("beforeunload", handleBeforeUnload);
 
-
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       if (client.active) {
@@ -140,6 +139,8 @@ const App = () => {
       }
     };
   }, [authUser]);
+
+  /* --------------------------------------------------------------------------------------- */
 
   if (loadingAuthUser) {
     return (
@@ -153,9 +154,9 @@ const App = () => {
     <div className="flex">
         {authUser && <Sidebar />}
         <Routes>
-          <Route path="/" element={authUser ? <ServerPage /> : <LoginPage />} />
-          <Route path="/channels/:serverID/:channelID" element={authUser ? <ServerPage /> : <LoginPage />} />
-          <Route path="*" element={authUser ? <ServerPage /> : <LoginPage />} />
+          <Route path="/" element={authUser ? <ChannelPage /> : <LoginPage />} />
+          <Route path="/channels/:serverID/:channelID" element={authUser ? <ChannelPage /> : <LoginPage />} />
+          <Route path="*" element={authUser ? <ChannelPage /> : <LoginPage />} />
         </Routes>
       </div>
   )
