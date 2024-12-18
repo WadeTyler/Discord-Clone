@@ -1,6 +1,8 @@
 package net.tylerwade.discord;
 
 import net.tylerwade.discord.models.User;
+import net.tylerwade.discord.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -14,6 +16,7 @@ public class DiscordApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(DiscordApplication.class, args);
+
 	}
 
 }

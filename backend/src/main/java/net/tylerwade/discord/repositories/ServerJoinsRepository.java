@@ -1,9 +1,7 @@
 package net.tylerwade.discord.repositories;
 
 import jakarta.transaction.Transactional;
-import net.tylerwade.discord.models.Server;
-import net.tylerwade.discord.models.ServerJoin;
-import net.tylerwade.discord.models.ServerJoinPK;
+import net.tylerwade.discord.models.*;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -27,4 +25,7 @@ public interface ServerJoinsRepository extends CrudRepository<ServerJoin, Server
     @Transactional
     @Query(value = "DELETE FROM server_joins WHERE serverID = ?1", nativeQuery = true)
     void deleteByServerID(String serverID);
+
+    @Query(value = "SELECT new net.tylerwade.discord.models.UserDTO(u.userID, u.username, u.tag, u.avatar, u.status) FROM User u JOIN ServerJoin sj ON u.userID = sj.id.userID WHERE sj.id.serverID = ?1")
+    List<UserDTO> findUsersInServer(String serverID);
 }

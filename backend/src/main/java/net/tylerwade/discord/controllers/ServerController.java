@@ -3,10 +3,7 @@ package net.tylerwade.discord.controllers;
 import net.tylerwade.discord.lib.ErrorMessage;
 import net.tylerwade.discord.lib.SuccessMessage;
 import net.tylerwade.discord.lib.util.JwtUtil;
-import net.tylerwade.discord.models.Channel;
-import net.tylerwade.discord.models.Server;
-import net.tylerwade.discord.models.ServerJoin;
-import net.tylerwade.discord.models.ServerJoinPK;
+import net.tylerwade.discord.models.*;
 import net.tylerwade.discord.repositories.ChannelRepository;
 import net.tylerwade.discord.repositories.MessageRepository;
 import net.tylerwade.discord.repositories.ServerJoinsRepository;
@@ -306,4 +303,48 @@ public class ServerController {
             return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // Get users in a server
+    @GetMapping(path="/{serverID}/users")
+    public ResponseEntity getUsersInServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
+        try {
+
+            String userID = jwtUtil.getValue(authToken);
+
+            // Check server exists
+            if (!serverExists(serverID)) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
+            }
+
+            // Check if user is in server
+            if (isNotInServer(userID, serverID)) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.UNAUTHORIZED);
+            }
+
+            // Get users in server
+            List<UserDTO> users = serverJoinsRepository.findUsersInServer(serverID);
+
+            return new ResponseEntity<List<UserDTO>>(users, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println("Exception in getUsersInServer(): " + e.getMessage());
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    /// ------------------ UTIL ------------------ ///
+
+    // Check if user is in server
+    private boolean isNotInServer(String userID, String serverID) {
+        ServerJoinPK sjpk = new ServerJoinPK(serverID, userID);
+        return !serverJoinsRepository.existsById(sjpk);
+    }
+
+    // Check if server exists
+    private boolean serverExists(String serverID) {
+        return serverRepository.existsById(serverID);
+    }
+
 }
+
