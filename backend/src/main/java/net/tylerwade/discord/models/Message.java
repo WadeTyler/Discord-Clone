@@ -13,16 +13,15 @@ package net.tylerwade.discord.models;
 *
 * */
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name="messages")
 public class Message {
 
     @Id
-    private String messageID;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int messageID;
     private String senderID;
     private String timestamp;
     private String channelID;
@@ -31,19 +30,18 @@ public class Message {
     public Message() {
     }
 
-    public Message(String messageID, String senderID, String timestamp, String channelID, String content) {
-        this.messageID = messageID;
+    public Message(String senderID, String timestamp, String channelID, String content) {
         this.senderID = senderID;
         this.timestamp = timestamp;
         this.channelID = channelID;
         this.content = content;
     }
 
-    public String getMessageID() {
+    public int getMessageID() {
         return messageID;
     }
 
-    public void setMessageID(String messageID) {
+    public void setMessageID(int messageID) {
         this.messageID = messageID;
     }
 
