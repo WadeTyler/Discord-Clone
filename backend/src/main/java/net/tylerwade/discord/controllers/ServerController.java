@@ -55,6 +55,13 @@ public class ServerController {
             Server newServer = new Server(serverID, serverName, serverOwner, serverIcon);
             serverRepository.save(newServer);
 
+            // Create general channels
+            Channel generalTextChannel = new Channel(UUID.randomUUID().toString(), "general", serverID, "General text channel", 1, "text");
+            Channel generalVoiceChannel = new Channel(UUID.randomUUID().toString(), "general", serverID, "General voice channel", 1, "voice");
+
+            channelRepository.save(generalTextChannel);
+            channelRepository.save(generalVoiceChannel);
+
             // Join server
             ServerJoin serverJoin = new ServerJoin(serverID, serverOwner);
             serverJoinsRepository.save(serverJoin);
