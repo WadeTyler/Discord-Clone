@@ -85,6 +85,9 @@ public class ServerController {
             if (!server.getServerOwner().equals(jwtUtil.getValue(authToken)))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not the owner of this server."), HttpStatus.UNAUTHORIZED);
 
+            // Kick everyone
+            serverJoinsRepository.deleteByServerID(serverID);
+
             // Delete Server
             serverRepository.deleteById(serverID);
 

@@ -23,4 +23,8 @@ public interface ServerJoinsRepository extends CrudRepository<ServerJoin, Server
     @Query(value = "DELETE FROM server_joins WHERE serverID = ?1 AND userID = ?2", nativeQuery = true)
     void deleteByServerIDAndUserID(String serverID, String userID);
 
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM server_joins WHERE serverID = ?1", nativeQuery = true)
+    void deleteByServerID(String serverID);
 }
