@@ -15,6 +15,8 @@ public class User {
     private String tag;
     private String email;
     private String password;
+    private String status;
+    private String avatar;
 
     public User(String userID, String username, String tag, String email, String password) {
         this.userID = userID;
@@ -66,5 +68,21 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 }
