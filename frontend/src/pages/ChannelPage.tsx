@@ -7,7 +7,7 @@ import MessageComponent from "../components/MessageComponent";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "../context/WebSocketContext";
 import toast from "react-hot-toast";
-import { UserSkeleton } from "../components/skeletons/UserSkeletons";
+import { UserSkeleton } from "../components/skeletons/Skeletons";
 
 const ChannelPage = () => {
 

@@ -5,10 +5,11 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Server } from '../../types/types';
+import { ServerIconSkeleton } from '../skeletons/Skeletons';
 
 const ServerList = () => {
 
-  const {data:servers} = useQuery<Server[] | null>({ queryKey: ['joinedServers'] });
+  const {data:servers, isPending:isLoadingServers} = useQuery<Server[] | null>({ queryKey: ['joinedServers'] });
   const [hoveringNewServer, setNewServerHover] = useState<boolean>(false);
 
   return (
@@ -23,9 +24,14 @@ const ServerList = () => {
 
       {/* Server List */}
       <div className="flex flex-col gap-2 items-center h-fit w-full relative">
-        {servers?.map(server => (
+        {!isLoadingServers && servers?.map(server => (
           <ServerButton key={server.serverID} server={server} />
         ))}
+        {isLoadingServers && (
+          Array.from({ length: 5 }, (_, index) => (
+            <ServerIconSkeleton />
+          ) )
+        )}
 
         <div 
         onMouseEnter={() => setNewServerHover(true)}

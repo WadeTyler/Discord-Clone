@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import ServerList from "./ServerList"
 import { Channel, Server, User } from "../../types/types";
-import { authUser } from "../../constants/testData";
 import { IconChevronDown, IconCompassFilled, IconHeadphonesFilled, IconMicrophoneFilled, IconSettingsFilled } from "@tabler/icons-react";
 import ChannelButton from "./ChannelButton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { UserSkeleton } from "../skeletons/UserSkeletons";
-import { ChannelSkeleton } from "../skeletons/ChannelSkeletons";
+import { UserSkeleton } from "../skeletons/Skeletons";
+import { ChannelSkeleton } from "../skeletons/Skeletons";
 
 const Sidebar = () => {
 
