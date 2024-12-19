@@ -3,10 +3,13 @@ import ServerList from "./ServerList"
 import { Channel, Server, User } from "../../types/types";
 import { IconChevronDown, IconCompassFilled, IconHeadphonesFilled, IconMicrophoneFilled, IconSettingsFilled } from "@tabler/icons-react";
 import ChannelButton from "./ChannelButton";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { UserSkeleton } from "../skeletons/Skeletons";
 import { ChannelSkeleton } from "../skeletons/Skeletons";
+import CloseButton from "../lib/CloseButton";
+import UploadImage from "../lib/UploadImage";
+import { LoadingSpinnerMD } from "../lib/util/LoadingSpinner";
 
 const Sidebar = () => {
 
@@ -14,12 +17,18 @@ const Sidebar = () => {
   const {data:authUser, isPending:isLoadingAuthUser} = useQuery<User | null>({ queryKey: ['authUser'] });
   const {data:currentServer } = useQuery<Server | null>({ queryKey: ['currentServer'] });
 
-  // Hover states
+  // States
   const [hoveringUserInfo, setHoveringUserInfo] = useState(false);
+  const [creatingServer, setCreatingServer] = useState<boolean>(false);
 
   return (
     <div className="min-w-72 w-72 h-screen bg-secondary flex relative">
-      <ServerList />
+
+      {/* Creating Server */}
+      {creatingServer && <CreatingServer setCreatingServer={setCreatingServer} />}
+
+      {/* Server List */}
+      <ServerList setCreatingServer={setCreatingServer} />
 
       {/* Show the ServerBar for the selected server */}
       {currentServer && <ServerBar /> }
@@ -172,4 +181,89 @@ const ServerBar = () => {
     </div>
   )
 
+}
+
+const CreatingServer = ({setCreatingServer}: {
+  setCreatingServer: React.Dispatch<React.SetStateAction<boolean>>
+}) => {
+  // AuthUser
+  const {data:authUser} = useQuery<User | null>({ queryKey: ['authUser'] });
+
+  // States
+  const [serverName, setServerName] = useState<string>(`${authUser?.username}'s Server`);
+
+  // QueryClient
+  const API_URL = import.meta.env.VITE_API_URL;
+  const queryClient = useQueryClient();
+
+
+
+  // Mutation to handle creating the server
+  const { mutate:createServer, isPending:isLoadingCreateServer } = useMutation({
+    mutationFn: async () => {
+      try {
+        const response = await fetch(`${API_URL}/servers/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ serverName }),
+          credentials: "include",
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error);
+        }
+
+        // Set current server to the newly created server
+        queryClient.setQueryData<Server>(['currentServer'], data);
+
+        return data;
+      } catch (error) {
+        throw new Error((error as Error).message);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Server created successfully");
+      queryClient.invalidateQueries({ queryKey: ['joinedServers'] });
+      setCreatingServer(false);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Something went wrong");
+    }
+  })
+
+  return (
+    <div className="fixed w-full h-screen bg-[rgba(0,0,0,.8)] flex items-center justify-center z-40">
+      <div className="bg-primary w-[28rem] flex flex-col gap-3 items-center relative rounded z-50">
+        <div className="p-4 flex flex-col gap-3 items-center relative">
+          <CloseButton setState={setCreatingServer} cn="absolute top-4 right-4"/>
+          <h2 className="font-bold text-accent text-2xl">Customize Your Server</h2>
+          <p className="text-accentDark text-sm text-center px-4">Give your new server a personality with a name and an icon. You can always change it later.</p>
+
+          <UploadImage htmlFor="nothing-FIX-LATER"/>
+
+          <section className="flex flex-col gap-1 w-full">
+            <label htmlFor="serverName" className="input-label">SERVER NAME</label>
+            <input type="text" id="serverName" className="input-bar" value={serverName} onChange={(e) => setServerName(e.target.value)} />
+          </section>
+          <p className="text-accentDark text-xs w-full text-start">By creating a server, you agree to Discord's <span className="blue-link">Community Guidelines</span>.</p>
+        </div>
+
+        <div className="w-full h-16 flex items-center justify-center bg-secondary rounded-b">
+          {!isLoadingCreateServer && 
+            <button 
+              onClick={() => createServer()}
+              className="submit-btn !px-8 text-sm"
+            >
+              Create
+            </button>
+          }
+          {isLoadingCreateServer && <LoadingSpinnerMD />}
+        </div>
+      </div>
+    </div>
+  )
 }

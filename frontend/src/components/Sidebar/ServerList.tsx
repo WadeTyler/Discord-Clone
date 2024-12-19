@@ -1,13 +1,13 @@
 
 import { IconBrandDiscordFilled, IconPlus } from '@tabler/icons-react';
 import ServerButton from './ServerButton';
-import { useState } from 'react';
+import { SetStateAction, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Server } from '../../types/types';
 import { ServerIconSkeleton } from '../skeletons/Skeletons';
 
-const ServerList = () => {
+const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetStateAction<boolean>>;}) => {
 
   const {data:servers, isPending:isLoadingServers} = useQuery<Server[] | null>({ queryKey: ['joinedServers'] });
   const [hoveringNewServer, setNewServerHover] = useState<boolean>(false);
@@ -33,9 +33,11 @@ const ServerList = () => {
           ) )
         )}
 
+        {/* Create Sever Button */}
         <div 
         onMouseEnter={() => setNewServerHover(true)}
         onMouseLeave={() => setNewServerHover(false)}
+        onClick={() => setCreatingServer(true)}
         className="w-12 h-12 flex items-center justify-center relative cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 hover:bg-green-500 hover:text-white bg-primary p-2 text-green-500">
           <IconPlus/>
           {hoveringNewServer && <NewServerLabel />}

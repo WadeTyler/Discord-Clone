@@ -5,3 +5,19 @@
 body {
   @apply bg-primary text-accent;
 }
+
+.input-label {
+  @apply font-bold text-accentDark text-xs;
+}
+
+.input-bar {
+  @apply p-2 rounded bg-tertiary focus:outline-none;
+}
+
+.submit-btn {
+  @apply bg-accentBlue text-white p-2 rounded hover:bg-accentBlueDark cursor-pointer duration-300;
+}
+
+.blue-link {
+  @apply text-blue-400 font-semibold hover:underline;
+}
