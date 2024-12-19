@@ -74,8 +74,44 @@ public class ServerController {
         }
     }
 
+    // Update the server given the serverID and updateRequest
+    @PutMapping(path="/{serverID}/update")
+    public ResponseEntity updateServer(@PathVariable String serverID, @RequestBody Server updateRequest, @CookieValue("authToken") String authToken) {
+        try {
+            String userID = jwtUtil.getValue(authToken);
+
+            // Check server exists
+            if (!serverExists(serverID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
+
+            // Check user is in server
+            if (isNotInServer(userID, serverID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.UNAUTHORIZED);
+
+            // Check user is owner of server
+            Server server = serverRepository.findById(serverID).get();
+            if (!server.getServerOwner().equals(userID)) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not the owner of this server."), HttpStatus.UNAUTHORIZED);
+            }
+
+            // Check for serverName
+            if (updateRequest.getServerName().isEmpty())
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("A server name is required."), HttpStatus.BAD_REQUEST);
+
+            // Update server
+            server.setServerName(updateRequest.getServerName());
+            serverRepository.save(server);
+
+            return new ResponseEntity<Server>(server, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println("Exception in updateServer(): " + e.getMessage());
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // Delete a server given the serverID
-    @DeleteMapping(path="/delete/{serverID}")
+    @DeleteMapping(path="/{serverID}/delete")
     public ResponseEntity deleteServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
         try {
             // Check for serverID
@@ -94,6 +130,12 @@ public class ServerController {
 
             // Kick everyone
             serverJoinsRepository.deleteByServerID(serverID);
+
+            // Delete all Messages
+            messageRepository.deleteByServerID(serverID);
+
+            // Delete all Channels
+            channelRepository.deleteByServerID(serverID);
 
             // Delete Server
             serverRepository.deleteById(serverID);

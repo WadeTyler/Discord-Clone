@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import ServerList from "./ServerList"
 import { Channel, Server, User } from "../../types/types";
 import { IconChevronDown, IconCompassFilled, IconDoorExit, IconHeadphonesFilled, IconMicrophoneFilled, IconSettingsFilled, IconUsers, IconX } from "@tabler/icons-react";
@@ -11,6 +11,7 @@ import CloseButton from "../lib/CloseButton";
 import UploadImage from "../lib/UploadImage";
 import { LoadingSpinnerMD } from "../lib/util/LoadingSpinner";
 import { motion } from "framer-motion";
+import ServerSettings from "../server-settings/ServerSettings";
 
 const Sidebar = () => {
 
@@ -21,6 +22,7 @@ const Sidebar = () => {
   // States
   const [hoveringUserInfo, setHoveringUserInfo] = useState(false);
   const [creatingServer, setCreatingServer] = useState<boolean>(false);
+  const [showServerSettings, setShowServerSettings] = useState<boolean>(false);
 
   return (
     <div className="min-w-72 w-72 h-screen bg-secondary flex relative">
@@ -32,7 +34,10 @@ const Sidebar = () => {
       <ServerList setCreatingServer={setCreatingServer} />
 
       {/* Show the ServerBar for the selected server */}
-      {currentServer && <ServerBar /> }
+      {currentServer && <ServerBar setShowServerSettings={setShowServerSettings} /> }
+
+      {/* Show server settings */}
+      {showServerSettings && <ServerSettings setShowServerSettings={setShowServerSettings} />}
 
       {/* Bottom Bar */}
       <div className="absolute bottom-0 w-full h-16 flex items-center bg-tertiary">
@@ -95,7 +100,7 @@ const Sidebar = () => {
 
 export default Sidebar
 
-const ServerBar = () => {
+const ServerBar = ({setShowServerSettings}: {setShowServerSettings: React.Dispatch<SetStateAction<boolean>>;}) => {
 
   // QueryClient
   const queryClient = useQueryClient();
@@ -178,7 +183,7 @@ const ServerBar = () => {
       </div>
 
       {/* Server Options */}
-      {showServerOptionsDropdown && <ServerOptionsDropdown />}
+      {showServerOptionsDropdown && <ServerOptionsDropdown setShowServerSettings={setShowServerSettings} setShowServerOptionsDropdown={setShowServerOptionsDropdown} />}
 
       {/* Text Channels */}
       <div className="flex flex-col gap-1 p-2">
@@ -198,7 +203,10 @@ const ServerBar = () => {
 }
 
 // Server Options Dropdown
-const ServerOptionsDropdown = () => {
+const ServerOptionsDropdown = ({setShowServerSettings, setShowServerOptionsDropdown}: {
+  setShowServerSettings: React.Dispatch<SetStateAction<boolean>>;
+  setShowServerOptionsDropdown: React.Dispatch<SetStateAction<boolean>>;
+}) => {
 
   const {data:authUser} = useQuery<User | null>({ queryKey: ['authUser'] });
   const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
@@ -222,7 +230,12 @@ const ServerOptionsDropdown = () => {
 
       {/* Owner Options */}
       {isOwner && 
-        <section className="flex justify-between items-center w-full hover:bg-accentBlueDark hover:text-white p-2 rounded cursor-pointer">
+        <section 
+        onClick={() => {
+          setShowServerSettings(true);
+          setShowServerOptionsDropdown(false);
+        }}
+        className="flex justify-between items-center w-full hover:bg-accentBlueDark hover:text-white p-2 rounded cursor-pointer">
           Server Settings
           <IconSettingsFilled />
         </section>

@@ -9,6 +9,7 @@ import { LoadingSpinnerLG } from './components/lib/util/LoadingSpinner'
 import toast from 'react-hot-toast'
 import { useWebSocket } from './context/WebSocketContext'
 import ChannelPage from './pages/ChannelPage'
+import DirectMessages from './pages/DirectMessages'
 
 const App = () => {
 
@@ -169,6 +170,7 @@ const App = () => {
         {authUser && <Sidebar />}
         <Routes>
           <Route path="/" element={authUser ? <ChannelPage /> : <LoginPage />} />
+          <Route path="/dm" element={authUser ? <DirectMessages /> : <LoginPage />} />
           <Route path="/channels/:serverID/:channelID" element={authUser ? <ChannelPage /> : <LoginPage />} />
           <Route path="*" element={authUser ? <ChannelPage /> : <LoginPage />} />
         </Routes>
