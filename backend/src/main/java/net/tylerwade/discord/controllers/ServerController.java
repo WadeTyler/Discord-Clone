@@ -204,6 +204,49 @@ public class ServerController {
         }
     }
 
+    @DeleteMapping(path="/{serverID}/kick/{targetUserID}")
+    public ResponseEntity kickUser(@PathVariable String serverID, @PathVariable String targetUserID, @CookieValue("authToken") String authToken) {
+        try {
+            String userID = jwtUtil.getValue(authToken);
+
+            if (serverID.isEmpty() || targetUserID.isEmpty()) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("serverID and targetUserID are required."), HttpStatus.BAD_REQUEST);
+            }
+
+            // Check server exists
+            if (!serverExists(serverID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.BAD_REQUEST);
+
+            // Check if user is in server
+            if (isNotInServer(userID, serverID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.UNAUTHORIZED);
+
+            // Check if user is owner of that server
+            Server server = serverRepository.findById(serverID).get();
+
+            if (!server.getServerOwner().equals(userID)) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not the owner of this server."), HttpStatus.UNAUTHORIZED);
+            }
+
+            // Check if target user is in server
+            if (isNotInServer(targetUserID, serverID))
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Target User is not in that server."), HttpStatus.BAD_REQUEST);
+
+            // Check if self
+            if (targetUserID.equals(userID)) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You cannot kick yourself."), HttpStatus.BAD_REQUEST);
+            }
+
+            // Kick user
+            serverJoinsRepository.deleteByServerIDAndUserID(serverID, targetUserID);
+
+            return new ResponseEntity<SuccessMessage>(new SuccessMessage("User kicked."), HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Exception in kickUser(): " + e.getMessage());
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // Get joined Servers
     @GetMapping(path="/joined")
     public ResponseEntity getJoinedServers(@CookieValue("authToken") String authToken) {
