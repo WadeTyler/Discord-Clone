@@ -65,15 +65,53 @@ const ChannelHeaderBar = ({ setShowUserList, showUserList}: {
 
 const UsersList = () => {
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const queryClient = useQueryClient();
+
   const { data:currentServer } = useQuery<Server | null>({ queryKey: ['currentServer'] });
 
-  const [users, setUsers] = useState<User[]>(server1Users);
+  const { data:users, isPending:isLoadingUsers } = useQuery<User[]>({
+    queryKey: ['users'],
+    queryFn: async () => {
+      // Fetch Users in the current Server
+      try {
+        const response = await fetch(`${API_URL}/servers/${currentServer?.serverID}/users`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        const data = await response.json();
+
+        console.log("Users: ", data);
+
+        if (!response.ok) {
+          throw new Error(data.error);
+        }
+        
+        return data;
+
+      } catch (error) {
+        console.log((error as Error).message || "Something went wrong loading users list.");
+      }
+    }
+  })
+
+  useEffect(() => {
+    // Reload users on server change
+    if (currentServer) {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    }
+  }, [currentServer]);
 
   return (
     <div className="flex flex-col gap-2 h-full bg-secondary min-w-64 max-w-64 p-4">
       {/* Online Users */}
-      <p className="text-xs text-gray-400">Online - {users.filter((user) => user.status !== 'Offline').length}</p>
-      {users.filter((user) => user.status === 'Online').map((user) => (
+      <p className="text-xs text-gray-400">Online - {users?.filter((user) => user.status !== 'Offline').length}</p>
+      {users?.filter((user) => user.status === 'Online').map((user) => (
         <div className="flex gap-2 items-center w-full" key={user.userID}>
           {/* Avatar */}
           <div className={`w-8 h-8 rounded-full bg-center bg-cover`} style={{ backgroundImage: `url(${user.avatar ? user.avatar : "./default-avatar.png"})` }}></div>
@@ -87,8 +125,8 @@ const UsersList = () => {
       ))}
 
       {/* Offline Users */}
-      <p className="text-xs text-gray-400">Offline - {users.filter((user) => user.status === 'Offline').length}</p>
-      {users.filter((user) => user.status === 'Offline').map((user) => (
+      <p className="text-xs text-gray-400">Offline - {users?.filter((user) => user.status === 'Offline').length}</p>
+      {users?.filter((user) => user.status === 'Offline').map((user) => (
         <div className="flex gap-2 items-center w-full" key={user.userID}>
           {/* Avatar */}
           <div className={`w-8 h-8 rounded-full bg-center bg-cover`} style={{ backgroundImage: `url(${user.avatar ? user.avatar : "./default-avatar.png"})`}}></div>
@@ -138,7 +176,6 @@ const Messages = () => {
       // Reveive All previous Messages
       client.subscribe(`/topic/getMessages/${currentTextChannel.channelID}/${authUser.userID}`, (message) => {
         const prevMessages: Message[] = JSON.parse(message.body).body;
-        console.log("Previous Messages: ", prevMessages);
         setMessages(prevMessages);
       });
 
