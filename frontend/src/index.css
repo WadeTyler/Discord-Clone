@@ -6,6 +6,10 @@ body {
   @apply bg-primary text-accent;
 }
 
+.no-hightlight {
+  user-select: none;
+}
+
 .input-label {
   @apply font-bold text-accentDark text-xs;
 }

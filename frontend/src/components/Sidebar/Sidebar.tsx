@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ServerList from "./ServerList"
 import { Channel, Server, User } from "../../types/types";
-import { IconChevronDown, IconCompassFilled, IconHeadphonesFilled, IconMicrophoneFilled, IconSettingsFilled } from "@tabler/icons-react";
+import { IconChevronDown, IconCompassFilled, IconDoorExit, IconHeadphonesFilled, IconMicrophoneFilled, IconSettingsFilled, IconUsers, IconX } from "@tabler/icons-react";
 import ChannelButton from "./ChannelButton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -10,6 +10,7 @@ import { ChannelSkeleton } from "../skeletons/Skeletons";
 import CloseButton from "../lib/CloseButton";
 import UploadImage from "../lib/UploadImage";
 import { LoadingSpinnerMD } from "../lib/util/LoadingSpinner";
+import { motion } from "framer-motion";
 
 const Sidebar = () => {
 
@@ -141,6 +142,14 @@ const ServerBar = () => {
     }
   });
 
+  // States
+  const [showServerOptionsDropdown, setShowServerOptionsDropdown] = useState<boolean>(false);
+
+  // Close server options on server change
+  useEffect(() => {
+    setShowServerOptionsDropdown(false);
+  }, [currentServer]);
+
 
   useEffect(() => {
     // Invalidate channels query on server change
@@ -157,12 +166,19 @@ const ServerBar = () => {
 
   return (
 
-    <div className="h-full w-full bg-secondary flex flex-col gap-4">
+    <div className="h-full w-full bg-secondary flex flex-col gap-4 relative">
       {/* Server Info */}
-      <div className="h-12 w-full flex py-2 px-4 shadow-md border-b-tertiary border-b items-center justify-between">
-        <p>{currentServer?.serverName}</p>
-        <IconChevronDown />
+      <div 
+        onClick={() => setShowServerOptionsDropdown(!showServerOptionsDropdown)}
+        className="h-12 w-full flex py-2 px-4 shadow-md border-b-tertiary border-b items-center justify-between hover:bg-primary cursor-pointer"
+      >
+        <p className="text-white font-semibold text-sm">{currentServer?.serverName}</p>
+        {showServerOptionsDropdown && <IconX className="text-xs" />}
+        {!showServerOptionsDropdown && <IconChevronDown className="text-xs" />}
       </div>
+
+      {/* Server Options */}
+      {showServerOptionsDropdown && <ServerOptionsDropdown />}
 
       {/* Text Channels */}
       <div className="flex flex-col gap-1 p-2">
@@ -176,13 +192,57 @@ const ServerBar = () => {
         }
       </div>
 
-
-
     </div>
   )
 
 }
 
+// Server Options Dropdown
+const ServerOptionsDropdown = () => {
+
+  const {data:authUser} = useQuery<User | null>({ queryKey: ['authUser'] });
+  const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
+
+  // States
+  const [isOwner, setIsOwner] = useState<boolean>(authUser?.userID === currentServer?.serverOwner || false);
+
+  return (
+    <motion.div 
+    initial={{ opacity: 0, y: -10, scale: 0.8, x: "-50%" }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    className="bg-tertiary p-2 flex flex-col items-center gap-1 absolute  top-[calc(3rem+1rem)] left-1/2 -translate-x-1/2 w-[calc(100%-1rem)] rounded text-accentDark text-sm no-hightlight">
+
+      {/* Invite people */}
+      <section className="flex justify-between items-center w-full text-accentBlue hover:bg-accentBlueDark hover:text-white p-2 rounded cursor-pointer">
+        Invite People
+        <IconUsers />
+      </section>
+
+      <hr className="w-full border-primary" />
+
+      {/* Owner Options */}
+      {isOwner && 
+        <section className="flex justify-between items-center w-full hover:bg-accentBlueDark hover:text-white p-2 rounded cursor-pointer">
+          Server Settings
+          <IconSettingsFilled />
+        </section>
+      }
+
+      <hr className="w-full border-primary" />
+      
+      {/* Non Owner Options */}
+      {!isOwner &&
+        <section className="flex justify-between items-center w-full text-red-600 hover:bg-accentBlueDark hover:text-white p-2 rounded cursor-pointer">
+          Leave Server
+          <IconDoorExit />
+        </section>
+      }
+    </motion.div>
+  )
+}
+
+
+// Panel for creating server
 const CreatingServer = ({setCreatingServer}: {
   setCreatingServer: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
