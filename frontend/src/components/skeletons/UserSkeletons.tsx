@@ -1,6 +1,8 @@
+// Skeletons for Users
 
 
-const UserListSkeleton = () => {
+// User List Skeleton
+export const UserSkeleton = () => {
   return (
     <div className="flex items-center gap-4">
       <div className="skeleton h-10 w-10 shrink-0 rounded-full"></div>
@@ -12,4 +14,3 @@ const UserListSkeleton = () => {
   )
 }
 
-export default UserListSkeleton

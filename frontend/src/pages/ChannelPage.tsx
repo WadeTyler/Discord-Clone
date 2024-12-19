@@ -3,12 +3,11 @@
 import { SetStateAction, useEffect, useState } from "react"
 import { Channel, Message, Server, User } from "../types/types";
 import { IconCrown, IconHash, IconPinFilled, IconPlus, IconSearch, IconUsers } from "@tabler/icons-react";
-import { server1GeneralMessages, server1Users } from "../constants/testData";
 import MessageComponent from "../components/MessageComponent";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "../context/WebSocketContext";
 import toast from "react-hot-toast";
-import UserListSkeleton from "../components/skeletons/UserListSkeleton";
+import { UserSkeleton } from "../components/skeletons/UserSkeletons";
 
 const ChannelPage = () => {
 
@@ -128,9 +127,9 @@ const UsersList = () => {
       ))}
       {isLoadingUsers && (
         <div className="flex flex-col gap-2">
-          <UserListSkeleton />
-          <UserListSkeleton />
-          <UserListSkeleton />
+          <UserSkeleton />
+          <UserSkeleton />
+          <UserSkeleton />
         </div>
       )}
 
@@ -149,9 +148,9 @@ const UsersList = () => {
       ))}
       {isLoadingUsers && (
         <div className="flex flex-col gap-2">
-          <UserListSkeleton />
-          <UserListSkeleton />
-          <UserListSkeleton />
+          <UserSkeleton />
+          <UserSkeleton />
+          <UserSkeleton />
         </div>
       )}
     </div>
