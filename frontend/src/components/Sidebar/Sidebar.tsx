@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ServerList from "./ServerList"
-import { Channel, Server } from "../../types/types";
+import { Channel, Server, User } from "../../types/types";
 import { authUser } from "../../constants/testData";
 import { IconChevronDown, IconCompassFilled, IconHeadphonesFilled, IconMicrophoneFilled, IconSettingsFilled } from "@tabler/icons-react";
 import ChannelButton from "./ChannelButton";
@@ -9,6 +9,8 @@ import toast from "react-hot-toast";
 
 const Sidebar = () => {
 
+  // Query Data
+  const {data:authUser} = useQuery<User | null>({ queryKey: ['authUser'] });
   const {data:currentServer } = useQuery<Server | null>({ queryKey: ['currentServer'] });
 
   // Hover states
@@ -40,13 +42,17 @@ const Sidebar = () => {
           onMouseLeave={() => setHoveringUserInfo(false)}
           className="flex gap-1 items-center hover:bg-zinc-600 pr-2 py-1 rounded w-full cursor-pointer">
             {/* Avatar */}
-            <div className={`bg-[url("./default-avatar.png")] bg-center bg-cover w-8 h-8 rounded-full`}></div>
+            <div className={`bg-center bg-cover w-8 h-8 rounded-full`} 
+            style={{ backgroundImage: authUser?.avatar ? `url(${authUser.avatar})` : `url('./default-avatar.png')` }}
+            >
+
+            </div>
 
             {/* Name */}
             <section className="flex flex-col text-sm justify-center">
-              <p>{authUser.username}</p>
-              {!hoveringUserInfo && <p className="text-xs text-gray-400">{authUser.status}</p>}
-              {hoveringUserInfo && <p className="text-xs text-gray-400">{authUser.tag}</p>}
+              <p>{authUser?.username}</p>
+              {!hoveringUserInfo && <p className="text-xs text-gray-400">{authUser?.status}</p>}
+              {hoveringUserInfo && <p className="text-xs text-gray-400">#{authUser?.tag}</p>}
             </section>
           </div>
 
