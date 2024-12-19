@@ -162,6 +162,7 @@ const Messages = () => {
   // States
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState<string>('');
+  const [isLoadingPrevMessages, setIsLoadingPrevMessages] = useState<boolean>(false);
 
   // Current Text Channel
   const { data: currentTextChannel }  = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
@@ -179,6 +180,8 @@ const Messages = () => {
       
       // Set messages to empty
       setMessages([]);
+      // Set Loading state before fetching messages
+      setIsLoadingPrevMessages(true);
 
       // Request All previous Messages
       client.publish({
@@ -193,6 +196,8 @@ const Messages = () => {
       client.subscribe(`/topic/getMessages/${currentTextChannel.channelID}/${authUser.userID}`, (message) => {
         const prevMessages: Message[] = JSON.parse(message.body).body;
         setMessages(prevMessages);
+        // Update Loading State
+        setIsLoadingPrevMessages(false);
       });
 
       // Receive new messages to the current Channel
@@ -205,6 +210,7 @@ const Messages = () => {
         const newMessage: Message = JSON.parse(response.body).body;
         console.log("New Message: ", newMessage);
         setMessages((prevMessages) => [...prevMessages, newMessage]);
+        
       });
     }
 
@@ -244,13 +250,6 @@ const Messages = () => {
     }
   }
 
-  const smoothScrollToBottom = (messageContainer: HTMLDivElement) => {
-    messageContainer.scrollTo({
-      top: messageContainer.scrollHeight,
-      behavior: 'smooth'
-    });
-  }
-
   const snapScrollToBottom = (messageContainer: HTMLDivElement) => {
     messageContainer.scrollTo(0, messageContainer.scrollHeight);
   }
@@ -270,10 +269,15 @@ const Messages = () => {
       
       {/* Map Messages */}
       <div className="messages-container w-full max-h-[calc(100vh-8rem)] flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-4 justify-end">
-          {messages.map((message: Message) => (
-          <MessageComponent key={message.messageID} message={message} /> 
+        <div className=" flex flex-col gap-4 justify-end">
+          {!isLoadingPrevMessages && messages.map((message: Message) => (
+            <MessageComponent key={message.messageID} message={message} /> 
           ))}
+          {isLoadingPrevMessages && (
+            Array.from({ length: 10 }).map((_, index) => (
+              <UserSkeleton key={index} />
+            )))
+          }
         </div>
       </div>
 
