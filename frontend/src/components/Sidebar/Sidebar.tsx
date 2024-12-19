@@ -7,6 +7,7 @@ import ChannelButton from "./ChannelButton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { UserSkeleton } from "../skeletons/UserSkeletons";
+import { ChannelSkeleton } from "../skeletons/ChannelSkeletons";
 
 const Sidebar = () => {
 
@@ -102,7 +103,7 @@ const ServerBar = () => {
   }, [currentServer]);
 
   // Fetch channels
-  const { data: channels } = useQuery<Channel[]>({
+  const { data: channels, isPending:isLoadingChannels } = useQuery<Channel[]>({
     queryKey: ['channels'],
     queryFn: async () => {
       try {
@@ -157,9 +158,14 @@ const ServerBar = () => {
 
       {/* Text Channels */}
       <div className="flex flex-col gap-1 p-2">
-        {channels?.map((channel) => (
+        {!isLoadingChannels && channels?.map((channel: Channel) => (
           <ChannelButton key={channel.channelID} channel={channel} />
         ))}
+        {isLoadingChannels && (
+          Array.from({length: 10}, (_, index) => (
+            <ChannelSkeleton key={index} />
+          )))
+        }
       </div>
 
 
