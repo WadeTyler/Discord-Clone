@@ -8,6 +8,7 @@ import MessageComponent from "../components/MessageComponent";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "../context/WebSocketContext";
 import toast from "react-hot-toast";
+import UserListSkeleton from "../components/skeletons/UserListSkeleton";
 
 const ChannelPage = () => {
 
@@ -71,8 +72,9 @@ const UsersList = () => {
 
   const { data:currentServer } = useQuery<Server | null>({ queryKey: ['currentServer'] });
 
+  // Users in Server
   const { data:users, isPending:isLoadingUsers } = useQuery<User[]>({
-    queryKey: ['users'],
+    queryKey: ['usersInServer'],
     queryFn: async () => {
       // Fetch Users in the current Server
       try {
@@ -97,13 +99,14 @@ const UsersList = () => {
       } catch (error) {
         console.log((error as Error).message || "Something went wrong loading users list.");
       }
-    }
+    },
+    enabled: !!currentServer,
   })
 
   useEffect(() => {
     // Reload users on server change
     if (currentServer) {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['usersInServer'] });
     }
   }, [currentServer]);
 
@@ -111,7 +114,7 @@ const UsersList = () => {
     <div className="flex flex-col gap-2 h-full bg-secondary min-w-64 max-w-64 p-4">
       {/* Online Users */}
       <p className="text-xs text-gray-400">Online - {users?.filter((user) => user.status !== 'Offline').length}</p>
-      {users?.filter((user) => user.status === 'Online').map((user) => (
+      {!isLoadingUsers && users?.filter((user) => user.status === 'Online').map((user) => (
         <div className="flex gap-2 items-center w-full" key={user.userID}>
           {/* Avatar */}
           <div className={`w-8 h-8 rounded-full bg-center bg-cover`} style={{ backgroundImage: `url(${user.avatar ? user.avatar : "./default-avatar.png"})` }}></div>
@@ -123,10 +126,17 @@ const UsersList = () => {
           </section>
         </div>
       ))}
+      {isLoadingUsers && (
+        <div className="flex flex-col gap-2">
+          <UserListSkeleton />
+          <UserListSkeleton />
+          <UserListSkeleton />
+        </div>
+      )}
 
       {/* Offline Users */}
       <p className="text-xs text-gray-400">Offline - {users?.filter((user) => user.status === 'Offline').length}</p>
-      {users?.filter((user) => user.status === 'Offline').map((user) => (
+      {!isLoadingUsers && users?.filter((user) => user.status === 'Offline').map((user) => (
         <div className="flex gap-2 items-center w-full" key={user.userID}>
           {/* Avatar */}
           <div className={`w-8 h-8 rounded-full bg-center bg-cover`} style={{ backgroundImage: `url(${user.avatar ? user.avatar : "./default-avatar.png"})`}}></div>
@@ -137,6 +147,13 @@ const UsersList = () => {
           </section>
         </div>
       ))}
+      {isLoadingUsers && (
+        <div className="flex flex-col gap-2">
+          <UserListSkeleton />
+          <UserListSkeleton />
+          <UserListSkeleton />
+        </div>
+      )}
     </div>
   )
 }

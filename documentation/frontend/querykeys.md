@@ -8,3 +8,4 @@ List of query keys:
 ### currentServer
 ### currentTextChannel
 ### currentVoiceChannel
+### usersInServer
