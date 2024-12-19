@@ -9,11 +9,15 @@ import { ServerIconSkeleton } from '../skeletons/Skeletons';
 
 const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetStateAction<boolean>>;}) => {
 
+  // Query Data
   const {data:servers, isPending:isLoadingServers} = useQuery<Server[] | null>({ queryKey: ['joinedServers'] });
+  const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
+
+  // States
   const [hoveringNewServer, setNewServerHover] = useState<boolean>(false);
 
   return (
-    <div className="flex flex-col gap-2 items-center h-screen px-4 py-2 bg-tertiary relative w-16">
+    <div className="flex flex-col gap-2 items-center h-screen py-2 bg-tertiary relative w-16">
 
       {/* Direct Messages */}
       <div className=" w-12 h-12 flex items-center justify-center bg-primary cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 p-2">
@@ -25,7 +29,12 @@ const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetS
       {/* Server List */}
       <div className="flex flex-col gap-2 items-center h-fit w-full relative">
         {!isLoadingServers && servers?.map(server => (
-          <ServerButton key={server.serverID} server={server} />
+          <div className="relative">
+            <ServerButton key={server.serverID} server={server} />
+            {currentServer?.serverID === server.serverID && (
+              <div className="bg-accent h-full absolute -left-1 top-0 w-4 rounded-full"></div>
+            )}
+          </div>
         ))}
         {isLoadingServers && (
           Array.from({ length: 5 }, (_, index) => (
