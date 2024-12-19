@@ -1,7 +1,7 @@
 import { SetStateAction, useEffect, useState } from "react";
 import ServerList from "./ServerList"
 import { Channel, Server, User } from "../../types/types";
-import { IconChevronDown, IconCompassFilled, IconDoorExit, IconHeadphonesFilled, IconMicrophoneFilled, IconSettingsFilled, IconUsers, IconX } from "@tabler/icons-react";
+import { IconChevronDown, IconCompassFilled, IconDoorExit, IconHeadphonesFilled, IconMicrophoneFilled, IconPlus, IconSettingsFilled, IconUsers, IconX } from "@tabler/icons-react";
 import ChannelButton from "./ChannelButton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -12,6 +12,7 @@ import UploadImage from "../lib/UploadImage";
 import { LoadingSpinnerMD } from "../lib/util/LoadingSpinner";
 import { motion } from "framer-motion";
 import ServerSettings from "../server-settings/ServerSettings";
+// import { filter } from "framer-motion/client";
 
 const Sidebar = () => {
 
@@ -108,6 +109,7 @@ const ServerBar = ({setShowServerSettings}: {setShowServerSettings: React.Dispat
   
   // Current Server
   const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
+  const {data:authUser} = useQuery<User | null>({ queryKey: ['authUser'] });
 
   // Current Text Channel
   const { data:currentTextChannel } = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
@@ -185,11 +187,30 @@ const ServerBar = ({setShowServerSettings}: {setShowServerSettings: React.Dispat
       {/* Server Options */}
       {showServerOptionsDropdown && <ServerOptionsDropdown setShowServerSettings={setShowServerSettings} setShowServerOptionsDropdown={setShowServerOptionsDropdown} />}
 
-      {/* Text Channels */}
-      <div className="flex flex-col gap-1 p-2">
-        {!isLoadingChannels && channels?.map((channel: Channel) => (
+      
+      <div className="flex flex-col gap-2 p-2">
+        {/* Text Channels */}
+        <section className="flex w-full justify-between items-center">
+          <p className="text-accentDark text-xs font-semibold">TEXT CHANNELS</p>
+          {authUser?.userID === currentServer?.serverOwner && (
+            <IconPlus className="w-5 h-5 hover:text-white cursor-pointer"/>
+          )}
+        </section>
+        {!isLoadingChannels && channels?.filter((channel: Channel) => channel.type === 'text').map((channel: Channel) => (
           <ChannelButton key={channel.channelID} channel={channel} />
         ))}
+
+        {/* Voice Channels */}
+        <section className="flex w-full justify-between items-center">
+          <p className="text-accentDark text-xs font-semibold">VOICE CHANNELS</p>
+          {authUser?.userID === currentServer?.serverOwner && (
+            <IconPlus className="w-5 h-5 hover:text-white cursor-pointer"/>
+          )}
+        </section>
+        {!isLoadingChannels && channels?.filter((channel: Channel) => channel.type === 'voice').map((channel: Channel) => (
+          <ChannelButton key={channel.channelID} channel={channel} />
+        ))}
+
         {isLoadingChannels && (
           Array.from({length: 10}, (_, index) => (
             <ChannelSkeleton key={index} />
