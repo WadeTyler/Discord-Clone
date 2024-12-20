@@ -33,9 +33,6 @@ public class WebSocketController {
 
             // Add user to the connectUsers list
             DiscordApplication.connectedUsers.put(userID, user);
-
-            // Print out the connected users
-            System.out.println("A user Connected. Total Connected: " + DiscordApplication.connectedUsers.size());
         } catch (Exception e) {
             System.out.println("Exception in onConnect(): " + e.getMessage());
         }
@@ -55,12 +52,6 @@ public class WebSocketController {
 
             // Add user to the connectUsers list
             DiscordApplication.connectedUsers.remove(userID);
-
-            // Print out the connected users
-            System.out.println("A user Disconnected. Total Connected: " + DiscordApplication.connectedUsers.size());
-            for (User u : DiscordApplication.connectedUsers.values()) {
-                System.out.println(u.getUsername());
-            }
         } catch (Exception e) {
             System.out.println("Exception in onDisconnect(): " + e.getMessage());
         }
