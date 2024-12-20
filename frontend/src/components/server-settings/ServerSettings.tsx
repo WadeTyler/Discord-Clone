@@ -28,7 +28,7 @@ const ServerSettings = ({setShowServerSettings}: {setShowServerSettings: React.D
       <ServerSettingsSidebar currentTab={currentTab} setCurrentTab={setCurrentTab} />
 
       {/* Body Container */}
-      <div className="w-full h-full p-8 py-12 pr-16 relative">
+      <div className="w-full h-full flex justify-center p-8 py-12 pr-16 relative">
         {currentTab === 'overview' && <Overview />}
         {currentTab === 'delete-server' && <DeleteServer currentServer={currentServer as Server} setCurrentTab={setCurrentTab} setShowServerSettings={setShowServerSettings} />}
       </div>

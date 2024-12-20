@@ -76,42 +76,45 @@ const Overview = () => {
   
 
   return (
-    <div className='w-full flex flex-col gap-4'>
+    <div className='w-full flex flex-col items-center gap-4'>
 
-      <header className='flex flex-col gap-4 w-full justify-center'>
-        <h1 className='font-semibold text-white text-xl'>Server Overview</h1>
+      <header className='flex flex-col gap-4 w-full justify-center items-center'>
+        
+        <div className="flex flex-col max-w-[50rem] w-full justify-center gap-4">
+          <h1 className='font-semibold text-white text-xl'>Server Overview</h1>
+          <div className="flex gap-8 w-full">
+            
 
-        <div className="flex gap-8 w-full">
-
-          {/* Image */}
-          <div className="flex flex-col items-center justify-center gap-2">
-            <div className="w-24 h-24 flex items-center justify-center bg-accentBlue rounded-full bg-center bg-cover shadow-lg shadow-tertiary"
-              style={{ backgroundImage: currentServer?.serverIcon ? `url("${currentServer.serverIcon}")` : '' }}
-            >
-              {!currentServer?.serverIcon && 
-                <p className='text-white text-2xl'>
-                  {splitServerName?.length === 1 ? splitServerName[0].charAt(0) : splitServerName?.map(name => name.charAt(0)).join("")}
-                </p>
-              }
+            {/* Image */}
+            <div className="flex flex-col items-center justify-center gap-2">
+              <div className="w-24 h-24 flex items-center justify-center bg-accentBlue rounded-full bg-center bg-cover shadow-lg shadow-tertiary"
+                style={{ backgroundImage: currentServer?.serverIcon ? `url("${currentServer.serverIcon}")` : '' }}
+              >
+                {!currentServer?.serverIcon && 
+                  <p className='text-white text-2xl'>
+                    {splitServerName?.length === 1 ? splitServerName[0].charAt(0) : splitServerName?.map(name => name.charAt(0)).join("")}
+                  </p>
+                }
+              </div>
+              <p className="text-[.55rem] text-accentDark">Minimum Size: <strong>128x128</strong></p>
             </div>
-            <p className="text-[.55rem] text-accentDark">Minimum Size: <strong>128x128</strong></p>
-          </div>
-          
-          {/* Upload Image details */}
-          <div className="flex flex-col w-36 gap-4">
-            <p className='text-xs'>We recommend an image of at least 512x512 for the server.</p>
-            <button className="w-fit border-zinc-600 border rounded text-xs px-4 py-2 hover:bg-zinc-600 text-white">Upload Image</button>
-          </div>
+            
+            {/* Upload Image details */}
+            <div className="flex flex-col w-36 gap-4">
+              <p className='text-xs'>We recommend an image of at least 512x512 for the server.</p>
+              <button className="w-fit border-zinc-600 border rounded text-xs px-4 py-2 hover:bg-zinc-600 text-white">Upload Image</button>
+            </div>
 
-          {/* Server Name */}
-          <div className="flex flex-col gap-2 w-full max-w-64">
-            <p className="input-label">SERVER NAME</p>
-            <input type="text" className='input-bar' value={serverName} onChange={(e) => {
-              setServerName(e.target.value);
-              setChangesMade(true);
-            } } />
-          </div>
+            {/* Server Name */}
+            <div className="flex flex-col gap-2 w-full max-w-64">
+              <p className="input-label">SERVER NAME</p>
+              <input type="text" className='input-bar' value={serverName} onChange={(e) => {
+                setServerName(e.target.value);
+                setChangesMade(true);
+              } } />
+            </div>
 
+          </div>
         </div>
 
       </header>

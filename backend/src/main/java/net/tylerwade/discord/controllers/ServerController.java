@@ -204,6 +204,7 @@ public class ServerController {
         }
     }
 
+    // Kick a user from designated server
     @DeleteMapping(path="/{serverID}/kick/{targetUserID}")
     public ResponseEntity kickUser(@PathVariable String serverID, @PathVariable String targetUserID, @CookieValue("authToken") String authToken) {
         try {
