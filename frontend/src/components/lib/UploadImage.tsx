@@ -1,6 +1,4 @@
 import { IconCameraFilled, IconPlus } from '@tabler/icons-react'
-import { html, label } from 'framer-motion/client'
-import React from 'react'
 
 const UploadImage = ({htmlFor}: {htmlFor: string}) => {
   return (

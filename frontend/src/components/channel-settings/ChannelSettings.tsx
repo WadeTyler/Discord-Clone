@@ -31,7 +31,7 @@ const ChannelSettings = ({channel, server, setShowChannelSettings}: {
       {/* Body Container */}
       <div className="w-full h-full flex justify-center p-8 py-12 pr-16 relative">
         {currentTab === 'overview' && <Overview channel={channel} />}
-        {currentTab === 'delete-channel' && <DeleteChannel channel={channel} server={server} handleCancel={() => setCurrentTab('overview')} isDeletingChannel={false} setShowChannelSettings={setShowChannelSettings} />}
+        {currentTab === 'delete-channel' && <DeleteChannel channel={channel} server={server} handleCancel={() => setCurrentTab('overview')} setShowChannelSettings={setShowChannelSettings} />}
       </div>
     </motion.div>
   )

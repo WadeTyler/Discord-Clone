@@ -2,14 +2,13 @@ import React from 'react'
 import { Channel, Server } from '../../types/types'
 import { IconHash, IconVolume } from '@tabler/icons-react';
 import { LoadingSpinnerLG } from '../lib/util/LoadingSpinner';
-import { QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
-const DeleteChannel = ({channel, server, handleCancel, isDeletingChannel, setShowChannelSettings}: {
+const DeleteChannel = ({channel, server, handleCancel, setShowChannelSettings}: {
   channel: Channel | null;
   server: Server | null;
   handleCancel: () => void;
-  isDeletingChannel: boolean;
   setShowChannelSettings: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 

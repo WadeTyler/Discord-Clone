@@ -37,7 +37,7 @@ const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetS
           </div>
         ))}
         {isLoadingServers && (
-          Array.from({ length: 5 }, (_, index) => (
+          Array.from({ length: 5 }, () => (
             <ServerIconSkeleton />
           ) )
         )}

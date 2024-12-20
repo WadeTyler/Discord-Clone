@@ -267,6 +267,10 @@ const ServerOptionsDropdown = ({setShowServerSettings, setShowServerOptionsDropd
   // States
   const [isOwner, setIsOwner] = useState<boolean>(authUser?.userID === currentServer?.serverOwner || false);
 
+  useEffect(() => {
+    setIsOwner(authUser?.userID === currentServer?.serverOwner || false);
+  }, [authUser, currentServer]);
+
   return (
     <motion.div 
     initial={{ opacity: 0, y: -10, scale: 0.8, x: "-50%" }}
