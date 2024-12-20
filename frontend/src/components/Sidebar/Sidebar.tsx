@@ -84,10 +84,10 @@ const Sidebar = () => {
               </div>
 
               {/* Name */}
-              <section className="flex flex-col text-sm justify-center">
+              <section className="flex flex-col text-sm justify-cente overflow-hidden">
                 <p>{authUser?.username}</p>
                 {!hoveringUserInfo && <p className="text-xs text-gray-400">{authUser?.status}</p>}
-                {hoveringUserInfo && <p className="text-xs text-gray-400">#{authUser?.tag}</p>}
+                {hoveringUserInfo && <motion.p initial={{y: 100}} animate={{y: 0}} transition={{duration: .2}} className="text-xs text-gray-400">#{authUser?.tag}</motion.p>}
               </section>
             </div>
 
