@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Channel } from '../../types/types'
 import SaveChangesBar from '../lib/SaveChangesBar';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
 const Overview = ({channel}: {
@@ -12,6 +12,8 @@ const Overview = ({channel}: {
 
   // QueryClient
   const queryClient = useQueryClient();
+  const { data: currentTextChannel } = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
+  const { data: currentVoiceChannel } = useQuery<Channel | null>({ queryKey: ['currentVoiceChannel'] });
 
   // States
   const [newChannelName, setNewChannelName] = useState<string>(channel?.channelName || '');
@@ -53,9 +55,19 @@ const Overview = ({channel}: {
         throw new Error((error as Error).message);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Channel updated successfully!");
       queryClient.invalidateQueries({ queryKey: ['channels']});
+
+      // If it is the current channel update it
+      if (data?.channelID === currentTextChannel?.channelID) {
+        queryClient.setQueryData<Channel | null>(['currentTextChannel'], data);
+      }
+
+      else if (data?.channelID === currentVoiceChannel?.channelID) {
+        queryClient.setQueryData<Channel | null>(['currentVoiceChannel'], data);
+      }
+
       setChangesMade(false);
     },
     onError: (error: Error) => {

@@ -38,7 +38,12 @@ const ChannelHeaderBar = ({ setShowUserList, showUserList}: {
       {/* Channel Info */}
       <section className="flex gap-1 items-center">
         <IconHash />
-        <p className="text-white font-semibold">{currentTextChannel?.channelName}</p>
+        <p className="text-white font-semibold">
+          <span className="pr-4">{currentTextChannel?.channelName}</span>
+          <span className="border-l border-primaryLight pl-4 text-xs text-accentDark">
+            {currentTextChannel?.channelDescription && currentTextChannel?.channelDescription?.length > 20 ? currentTextChannel?.channelDescription.slice(0, 20) + '...' : currentTextChannel?.channelDescription}
+          </span>
+        </p>
       </section>
 
 
