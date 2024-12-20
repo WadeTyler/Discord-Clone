@@ -11,7 +11,12 @@ import java.util.List;
 
 @Repository
 public interface ChannelRepository extends CrudRepository<Channel, String> {
+
+    @Query(value = "SELECT * FROM channels WHERE serverID = ?1 ORDER BY channelOrder ASC", nativeQuery = true)
     List<Channel> findByServerID(String serverID);
+
+    @Query(value = "SELECT * FROM channels WHERE serverID = ?1 AND channelID = ?2", nativeQuery = true)
+    Channel findByServerIDAndChannelID(String serverID, String channelID);
 
     @Modifying
     @Transactional

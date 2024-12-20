@@ -263,7 +263,7 @@ public class ServerController {
         }
     }
 
-    // Create a channel in the specified server
+    // Create a channel in the specified servera
     @PostMapping(path="/{serverID}/channels/create")
     public ResponseEntity createChannel(@PathVariable String serverID, @RequestBody Channel channelRequest, @CookieValue("authToken") String authToken) {
         try {
@@ -285,6 +285,16 @@ public class ServerController {
             // Check for channel name
             if (channelRequest.getChannelName().isEmpty())
                 return new ResponseEntity(new ErrorMessage("A channel name is required."), HttpStatus.BAD_REQUEST);
+
+            // Check channel name length
+            if (channelRequest.getChannelName().length() > 50) {
+                return new ResponseEntity(new ErrorMessage("Channel name is too long. Max 50 characters."), HttpStatus.BAD_REQUEST);
+            }
+
+            // Validate Channel name
+            if (channelRequest.getChannelName().charAt(0) == '-' || channelRequest.getChannelName().charAt(channelRequest.getChannelName().length() - 1) == '-') {
+                return new ResponseEntity(new ErrorMessage("Channel name cannot start or end with a hyphen."), HttpStatus.BAD_REQUEST);
+            }
 
             // Check for channel type
             if (channelRequest.getType().isEmpty())
@@ -349,6 +359,20 @@ public class ServerController {
             if (!server.getServerOwner().equals(userID))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You do not have permissions to edit this server."), HttpStatus.UNAUTHORIZED);
 
+            // Make sure there is at least one text channel
+            List<Channel> channels = channelRepository.findByServerID(serverID);
+            boolean hasTextChannel = false;
+            for (Channel c : channels) {
+                if (c.getType().equals("text") && !c.getChannelID().equals(channelID)) {
+                    hasTextChannel = true;
+                    break;
+                }
+            }
+
+            if (!hasTextChannel) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You must have at least one text channel."), HttpStatus.BAD_REQUEST);
+            }
+
             // Delete all messages in channel
             messageRepository.deleteByChannelID(channelID);
 
@@ -362,6 +386,56 @@ public class ServerController {
             return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // Update a channel in the specified server
+    @PutMapping(path="/{serverID}/channels/{channelID}/update")
+    public ResponseEntity updateChannel(@PathVariable String serverID, @PathVariable String channelID, @CookieValue("authToken") String authToken, @RequestBody Channel updateRequest) {
+        try {
+            String userID = jwtUtil.getValue(authToken);
+
+            // Check for channel name
+            if (updateRequest.getChannelName().isEmpty()) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("A channel name is required."), HttpStatus.BAD_REQUEST);
+            }
+
+            // Check channel description length
+            if (updateRequest.getChannelDescription() != null && updateRequest.getChannelDescription().length() > 1024) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel description is too long. Max 1024 characters."), HttpStatus.BAD_REQUEST);
+            }
+
+            // Check if server exists
+            if (!serverExists(serverID)) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
+            }
+
+            // Check if channel exists
+            Server server = serverRepository.findById(serverID).get();
+            Channel channel = channelRepository.findByServerIDAndChannelID(serverID, channelID);
+
+            if (channel == null) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel not found."), HttpStatus.NOT_FOUND);
+            }
+
+            // Check if user is the owner of the server
+            if (!server.getServerOwner().equals(userID)) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You do not have permissions to edit this server."), HttpStatus.UNAUTHORIZED);
+            }
+
+            // Update channel name and description
+            channel.setChannelName(updateRequest.getChannelName());
+            channel.setChannelDescription(updateRequest.getChannelDescription());
+
+            // Save channel
+            channelRepository.save(channel);
+
+            return new ResponseEntity<Channel>(channel, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println("Exception in updateChannel(): " + e.getMessage());
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     // Get channels in a server
     @GetMapping(path="/{serverID}/channels")

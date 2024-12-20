@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Server } from '../../types/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import SaveChangesBar from './SaveChangesBar';
+import SaveChangesBar from '../lib/SaveChangesBar';
 import toast from 'react-hot-toast';
 
 const Overview = () => {

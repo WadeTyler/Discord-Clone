@@ -11,6 +11,7 @@ const ServerSettings = ({setShowServerSettings}: {setShowServerSettings: React.D
 
   // Query Data
   const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
+  
 
   // States
   const [currentTab, setCurrentTab] = useState<string>('overview');
@@ -57,7 +58,7 @@ const ServerSettingsSidebar = ({currentTab, setCurrentTab}: {
 
       <p 
         onClick={() => setCurrentTab('overview')}
-        className={`px-2 py-1 rounded hover:bg-primary ${currentTab === 'overview' && 'bg-primaryLight'}`}
+        className={`px-2 py-1 rounded hover:bg-primary cursor-pointer ${currentTab === 'overview' && 'bg-primaryLight'}`}
       >
         Overview
       </p>
@@ -68,7 +69,7 @@ const ServerSettingsSidebar = ({currentTab, setCurrentTab}: {
       <h2 className="font-semibold text-xs pl-2">USER MANAGEMENT</h2>
       <p 
         onClick={() => setCurrentTab('members')}
-        className={`px-2 py-1 rounded hover:bg-primary ${currentTab === 'members' && 'bg-primaryLight'}`}
+        className={`px-2 py-1 rounded hover:bg-primary cursor-pointer ${currentTab === 'members' && 'bg-primaryLight'}`}
       >
         Members
       </p>
@@ -76,7 +77,7 @@ const ServerSettingsSidebar = ({currentTab, setCurrentTab}: {
       <hr className="border-primaryLight"/>
       <p 
         onClick={() => setCurrentTab('delete-server')}
-        className={`px-2 py-1 rounded flex items-center justify-between hover:bg-primary ${currentTab === 'delete-server' && 'bg-primaryLight'}`}
+        className={`px-2 py-1 rounded flex items-center justify-between hover:bg-primary cursor-pointer ${currentTab === 'delete-server' && 'bg-primaryLight'}`}
       >
         Delete Server
         <IconTrash  className="p-1"/>

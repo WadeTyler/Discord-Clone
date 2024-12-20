@@ -33,16 +33,16 @@ password: ****
 +-------------+--------------+------+-----+---------+-------+
 
 #### channels
-+--------------------+--------------+------+-----+---------+-------+
-| Field              | Type         | Null | Key | Default | Extra |
-+--------------------+--------------+------+-----+---------+-------+
-| channelID          | varchar(512) | NO   | PRI | NULL    |       |
-| channelName        | varchar(50)  | NO   |     | NULL    |       |
-| serverID           | varchar(512) | NO   | MUL | NULL    |       |
-| channelDescription | varchar(100) | YES  |     | NULL    |       |
-| channelOrder       | int          | NO   |     | NULL    |       |
-| type               | varchar(10)  | NO   |     | NULL    |       |
-+--------------------+--------------+------+-----+---------+-------+
++--------------------+---------------+------+-----+---------+-------+
+| Field              | Type          | Null | Key | Default | Extra |
++--------------------+---------------+------+-----+---------+-------+
+| channelID          | varchar(512)  | NO   | PRI | NULL    |       |
+| channelName        | varchar(50)   | NO   |     | NULL    |       |
+| serverID           | varchar(512)  | NO   | MUL | NULL    |       |
+| channelDescription | varchar(1024) | YES  |     | NULL    |       |
+| channelOrder       | int           | NO   |     | NULL    |       |
+| type               | varchar(10)   | NO   |     | NULL    |       |
++--------------------+---------------+------+-----+---------+-------+
 
 #### messages
 +-----------+--------------+------+-----+-------------------+-------------------+

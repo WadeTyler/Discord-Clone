@@ -1,7 +1,7 @@
 import { SetStateAction, useEffect, useState } from "react";
 import ServerList from "./ServerList"
 import { Channel, Server, User } from "../../types/types";
-import { IconChevronDown, IconCompassFilled, IconDoorExit, IconHeadphonesFilled, IconMicrophoneFilled, IconPlus, IconSettingsFilled, IconUsers, IconX } from "@tabler/icons-react";
+import { IconChevronDown, IconCompassFilled, IconDoorExit, IconHash, IconHeadphonesFilled, IconMicrophoneFilled, IconPlus, IconSettingsFilled, IconUsers, IconVolume, IconX } from "@tabler/icons-react";
 import ChannelButton from "./ChannelButton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -12,6 +12,7 @@ import UploadImage from "../lib/UploadImage";
 import { LoadingSpinnerMD } from "../lib/util/LoadingSpinner";
 import { motion } from "framer-motion";
 import ServerSettings from "../server-settings/ServerSettings";
+import ChannelSettings from "../channel-settings/ChannelSettings";
 // import { filter } from "framer-motion/client";
 
 const Sidebar = () => {
@@ -23,7 +24,17 @@ const Sidebar = () => {
   // States
   const [hoveringUserInfo, setHoveringUserInfo] = useState(false);
   const [creatingServer, setCreatingServer] = useState<boolean>(false);
+  const [creatingChannel, setCreatingChannel] = useState<boolean>(false);
+  const [newChannelType, setNewChannelType] = useState<string>('text');
   const [showServerSettings, setShowServerSettings] = useState<boolean>(false);
+  const [showChannelSettings, setShowChannelSettings] = useState<boolean>(false);
+  const [channelToEdit, setChannelToEdit] = useState<Channel | null>(null);
+
+  // Functions
+  const editChannel = (channel : Channel) => {
+    setChannelToEdit(channel);
+    setShowChannelSettings(true);
+  }
 
   return (
     <div className="min-w-72 w-72 h-screen bg-secondary flex relative">
@@ -31,14 +42,20 @@ const Sidebar = () => {
       {/* Creating Server */}
       {creatingServer && <CreatingServer setCreatingServer={setCreatingServer} />}
 
+      {/* Creating Channel */}
+      {creatingChannel && <CreatingChannel setCreatingChannel={setCreatingChannel} newChannelType={newChannelType} setNewChannelType={setNewChannelType} />}
+
       {/* Server List */}
       <ServerList setCreatingServer={setCreatingServer} />
 
       {/* Show the ServerBar for the selected server */}
-      {currentServer && <ServerBar setShowServerSettings={setShowServerSettings} /> }
+      {currentServer && <ServerBar setShowServerSettings={setShowServerSettings} setCreatingChannel={setCreatingChannel} setNewChannelType={setNewChannelType} editChannel={editChannel} /> }
 
       {/* Show server settings */}
       {showServerSettings && <ServerSettings setShowServerSettings={setShowServerSettings} />}
+
+      {/* Show Channel settings */}
+      {showChannelSettings && currentServer && channelToEdit && <ChannelSettings channel={channelToEdit} server={currentServer} setShowChannelSettings={setShowChannelSettings} />}
 
       {/* Bottom Bar */}
       <div className="absolute bottom-0 w-full h-16 flex items-center bg-tertiary">
@@ -101,7 +118,12 @@ const Sidebar = () => {
 
 export default Sidebar
 
-const ServerBar = ({setShowServerSettings}: {setShowServerSettings: React.Dispatch<SetStateAction<boolean>>;}) => {
+const ServerBar = ({setShowServerSettings, setNewChannelType, setCreatingChannel, editChannel}: {
+  setShowServerSettings: React.Dispatch<SetStateAction<boolean>>;
+  setNewChannelType: React.Dispatch<SetStateAction<string>>;
+  setCreatingChannel: React.Dispatch<SetStateAction<boolean>>;
+  editChannel: (channel: Channel) => void;
+}) => {
 
   // QueryClient
   const queryClient = useQueryClient();
@@ -188,27 +210,37 @@ const ServerBar = ({setShowServerSettings}: {setShowServerSettings: React.Dispat
       {showServerOptionsDropdown && <ServerOptionsDropdown setShowServerSettings={setShowServerSettings} setShowServerOptionsDropdown={setShowServerOptionsDropdown} />}
 
       
-      <div className="flex flex-col gap-2 p-2">
+      <div className="flex flex-col gap-2 p-2 overflow-x-hidden overflow-y-auto h-full pb-24">
         {/* Text Channels */}
         <section className="flex w-full justify-between items-center">
           <p className="text-accentDark text-xs font-semibold">TEXT CHANNELS</p>
           {authUser?.userID === currentServer?.serverOwner && (
-            <IconPlus className="w-5 h-5 hover:text-white cursor-pointer"/>
+            <IconPlus 
+            onClick={() => {
+              setNewChannelType('text');
+              setCreatingChannel(true);
+            }}
+            className="w-5 h-5 hover:text-white cursor-pointer"/>
           )}
         </section>
         {!isLoadingChannels && channels?.filter((channel: Channel) => channel.type === 'text').map((channel: Channel) => (
-          <ChannelButton key={channel.channelID} channel={channel} />
+          <ChannelButton key={channel.channelID} channel={channel} editChannel={editChannel} />
         ))}
 
         {/* Voice Channels */}
         <section className="flex w-full justify-between items-center">
           <p className="text-accentDark text-xs font-semibold">VOICE CHANNELS</p>
           {authUser?.userID === currentServer?.serverOwner && (
-            <IconPlus className="w-5 h-5 hover:text-white cursor-pointer"/>
+            <IconPlus 
+            onClick={() => {
+              setNewChannelType('voice');
+              setCreatingChannel(true);
+            }}
+            className="w-5 h-5 hover:text-white cursor-pointer"/>
           )}
         </section>
         {!isLoadingChannels && channels?.filter((channel: Channel) => channel.type === 'voice').map((channel: Channel) => (
-          <ChannelButton key={channel.channelID} channel={channel} />
+          <ChannelButton key={channel.channelID} channel={channel} editChannel={editChannel} />
         ))}
 
         {isLoadingChannels && (
@@ -358,6 +390,163 @@ const CreatingServer = ({setCreatingServer}: {
           {isLoadingCreateServer && <LoadingSpinnerMD />}
         </div>
       </div>
+    </div>
+  )
+}
+
+// Panel for creating channel
+const CreatingChannel = ({setCreatingChannel, newChannelType, setNewChannelType}: {
+  setCreatingChannel: React.Dispatch<SetStateAction<boolean>>;
+  newChannelType: string;
+  setNewChannelType: React.Dispatch<SetStateAction<string>>;
+}) => {
+
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // Query Data
+  const queryClient = useQueryClient();
+  const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
+
+  // States
+  const [channelName, setChannelName] = useState<string>('');
+
+  // Mutation to create channel
+  const { mutate:createChannel, isPending:isLoadingCreateChannel } = useMutation({
+    mutationFn: async () => {
+      try {
+
+        // Validate channel name
+        if (!channelName) {
+          throw new Error("Channel name cannot be empty");
+        }
+
+        if (channelName.charAt(0) === '-' || channelName.charAt(channelName.length-1) === '-') {
+          throw new Error("Channel name cannot start or end with a hyphen");
+        }
+        
+        const channelRequest = {
+          channelName: channelName,
+          type: newChannelType,
+        };
+
+        const response = await fetch(`${API_URL}/servers/${currentServer?.serverID}/channels/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(channelRequest),
+          credentials: "include",
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error);
+        }
+
+        return data;
+
+      } catch (error) {
+        throw new Error((error as Error).message);
+      }
+    },
+    onSuccess: (data: Channel) => {
+      toast.success("Channel created successfully");
+      queryClient.invalidateQueries({ queryKey: ['channels'] });
+
+      // Set the newly created channel as the current channel
+      if (data.type === 'text') {
+        queryClient.setQueryData<Channel>(['currentTextChannel'], data);
+      }
+      else if (data.type === 'voice') {
+        queryClient.setQueryData<Channel>(['currentVoiceChannel'], data);
+      }
+
+      setCreatingChannel(false);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Something went wrong");
+    }
+  })
+
+  return (
+    <div className="fixed bg-[rgba(0,0,0,.8)] w-full h-screen flex items-center justify-center z-40 top-0 left-0">
+
+      <div className="bg-primary w-[28rem] flex flex-col z-50 relative rounded">
+
+        <CloseButton setState={setCreatingChannel} cn="absolute top-4 right-4"/>
+
+        <div className="p-4 flex flex-col gap-4 text-accentDark">
+          <section className="flex flex-col">
+            <h2 className="text-xl text-accent">Create Channel</h2>
+            <p className="text-xs">in {newChannelType.charAt(0).toLocaleUpperCase() + newChannelType.substring(1)} Channels</p>
+          </section>
+
+          {/* Options */}
+          <div className="flex flex-col gap-2">
+            <p className="input-label">CHANNEL TYPE</p>
+
+            {/* Text Channel Option */}
+            <div 
+            onClick={() => setNewChannelType('text')}
+            className={`w-full flex  justify-between gap-2 items-center p-2 rounded cursor-pointer ${newChannelType === 'text' ? 'bg-primaryLight' : 'bg-secondary'}`}>
+              <IconHash />
+              <section className="flex flex-col gap-1">
+                <p className={`${newChannelType === 'text' && 'text-white'}`}>Text</p>
+                <p className="text-xs">Send messages, images, GIFs, emoji, opinions, and puns</p>
+              </section>
+
+              <div className="w-5 h-5 border-white border-2 rounded-full flex items-center justify-center">
+                {newChannelType === 'text' && <div className="w-3 h-3 bg-white rounded-full"></div>}
+              </div>
+            </div>
+
+
+            {/* Voice Channel Option */}
+            <div 
+            onClick={() => setNewChannelType('voice')}
+            className={`w-full flex  justify-between gap-2 items-center p-2 rounded cursor-pointer ${newChannelType === 'voice' ? 'bg-primaryLight' : 'bg-secondary'}`}>
+              <IconVolume />
+              <section className="flex flex-col gap-1">
+                <p className={`${newChannelType === 'voice' && 'text-white'}`}>Voice</p>
+                <p className="text-xs">Hang out together with voice, video, and screen share</p>
+              </section>
+
+              <div className="w-5 h-5 border-white border-2 rounded-full flex items-center justify-center">
+                {newChannelType === 'voice' && <div className="w-3 h-3 bg-white rounded-full"></div>}
+              </div>
+            </div>
+          </div>
+
+          {/* Input */}
+          <div className="flex flex-col gap-2">
+            <p className="input-label">CHANNEL NAME</p>
+            <div className="flex gap-1 input-bar items-center text-sm">
+              {newChannelType === 'text' && <IconHash />}
+              {newChannelType === 'voice' && <IconVolume />}
+              <input type="text" 
+              placeholder="new-channel" 
+              maxLength={50} 
+              value={channelName} 
+              onChange={(e) => {
+                var value = e.target.value.toLocaleLowerCase().replace(/\s/g, '-').replace(/[^a-zA-Z0-9-]/g, "");
+                setChannelName(value);
+              }} 
+              className="w-full h-full bg-transparent focus:outline-none text-accent" />
+            </div>
+          </div>
+
+        </div>
+
+        <div className="bg-secondary flex items-center justify-end p-4 rounded-b gap-4">
+          <p onClick={() => setCreatingChannel(false)} className="text-xs text-accentDark hover:underline cursor-pointer">Cancel</p>
+          {!isLoadingCreateChannel && <button onClick={() => createChannel()} className="submit-btn text-sm px-4 py-3">Create Channel</button>}
+          {isLoadingCreateChannel && <LoadingSpinnerMD />}
+        </div>
+
+      </div>
+
     </div>
   )
 }
