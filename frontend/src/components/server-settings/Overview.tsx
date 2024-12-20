@@ -120,7 +120,7 @@ const Overview = () => {
       </header>
 
       {changesMade && 
-        <SaveChangesBar resetChanges={resetChanges} saveChanges={handleSaveChanges} />
+        <SaveChangesBar resetChanges={resetChanges} saveChanges={handleSaveChanges} isPending={isSavingChanges} />
       }
 
 

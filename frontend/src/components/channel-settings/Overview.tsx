@@ -118,7 +118,7 @@ const Overview = ({channel}: {
       </div>
 
       {changesMade && 
-        <SaveChangesBar resetChanges={resetChanges} saveChanges={saveChanges} />
+        <SaveChangesBar resetChanges={resetChanges} saveChanges={saveChanges} isPending={isLoadingUpdateChannel} />
       }
 
     </div>
