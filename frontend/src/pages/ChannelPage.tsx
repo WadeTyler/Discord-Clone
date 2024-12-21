@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "../context/WebSocketContext";
 import toast from "react-hot-toast";
 import { UserSkeleton } from "../components/skeletons/Skeletons";
+import UserAvatar from "../components/users/UserAvatar";
 
 const ChannelPage = () => {
 
@@ -121,7 +122,7 @@ const UsersList = () => {
       {!isLoadingUsers && users?.filter((user) => user.status === 'Online').map((user) => (
         <div className="flex gap-2 items-center w-full" key={user.userID}>
           {/* Avatar */}
-          <div className={`w-8 h-8 rounded-full bg-center bg-cover`} style={{ backgroundImage: `url(${user.avatar ? user.avatar : "./default-avatar.png"})` }}></div>
+          <UserAvatar avatar={user.avatar} status={user.status} backgroundColor="secondary"/>
 
           {/* User Info */}
           <section className="flex gap-1">
@@ -142,8 +143,7 @@ const UsersList = () => {
       <p className="text-xs text-gray-400">Offline - {users?.filter((user) => user.status === 'Offline').length}</p>
       {!isLoadingUsers && users?.filter((user) => user.status === 'Offline').map((user) => (
         <div className="flex gap-2 items-center w-full" key={user.userID}>
-          {/* Avatar */}
-          <div className={`w-8 h-8 rounded-full bg-center bg-cover`} style={{ backgroundImage: `url(${user.avatar ? user.avatar : "./default-avatar.png"})`}}></div>
+          <UserAvatar avatar={user.avatar} status={user.status} backgroundColor="tertiary" />
           {/* User Info */}
           <section className="flex gap-1 items-center">
             <p className="text-zinc-500 text-sm">{user.username}</p>

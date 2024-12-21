@@ -13,6 +13,7 @@ import { LoadingSpinnerMD } from "../lib/util/LoadingSpinner";
 import { motion } from "framer-motion";
 import ServerSettings from "../server-settings/ServerSettings";
 import ChannelSettings from "../channel-settings/ChannelSettings";
+import UserAvatar from "../users/UserAvatar";
 // import { filter } from "framer-motion/client";
 
 const Sidebar = () => {
@@ -77,11 +78,7 @@ const Sidebar = () => {
             onMouseLeave={() => setHoveringUserInfo(false)}
             className="flex gap-1 items-center hover:bg-zinc-600 pr-2 py-1 rounded w-full cursor-pointer">
               {/* Avatar */}
-              <div className={`bg-center bg-cover w-8 h-8 rounded-full`} 
-              style={{ backgroundImage: authUser?.avatar ? `url(${authUser.avatar})` : `url('./default-avatar.png')` }}
-              >
-
-              </div>
+              <UserAvatar avatar={authUser?.avatar} status={authUser?.status} backgroundColor="tertiary" />
 
               {/* Name */}
               <section className="flex flex-col text-sm justify-cente overflow-hidden">
