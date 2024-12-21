@@ -16,4 +16,7 @@ public interface FriendRepository extends CrudRepository<Friend, Integer> {
 
     @Query(value = "SELECT * FROM friends WHERE friend2 = ?1 AND accepted = ?2", nativeQuery = true)
     Iterable<Friend> findByFriend2AndAccepted(String userID, boolean b);
+
+    @Query(value = "SELECT * FROM friends WHERE (friend1 = ?1 AND friend2 = ?2) OR (friend1 = ?2 AND friend2 = ?1) AND accepted = ?3", nativeQuery = true)
+    Friend findByFriend1AndFriend2AndAccepted(String friend1, String friend2, boolean accepted);
 }

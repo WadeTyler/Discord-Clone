@@ -73,6 +73,7 @@ password: ****
 | receiverID      | varchar(512) | NO   |     | NULL    |                |
 | timestamp       | timestamp    | NO   |     | NULL    |                |
 | content         | text         | NO   |     | NULL    |                |
+| seen            | tinyint      | YES  |     | 0       |                |
 +-----------------+--------------+------+-----+---------+----------------+
 
 #### friends
