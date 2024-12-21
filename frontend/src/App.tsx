@@ -65,10 +65,11 @@ const App = () => {
       }
     });
 
-  // Current Server, Current Text Channel, Current Voice Channel
+  // Current Server, Current Text Channel, Current Voice Channel, channels
   const { data:currentServer } = useQuery<Server | null>({ queryKey: ['currentServer'] });
   const { data:currentTextChannel } = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
   const { data:currentVoiceChannel } = useQuery<Channel | null>({ queryKey: ['currentVoiceChannel'] });
+  const { data:channels } = useQuery<Channel[]>({ queryKey: ['channels'] });
 
   useEffect(() => {
     console.log("authUser: ", authUser);
@@ -186,6 +187,67 @@ const App = () => {
           queryClient.invalidateQueries({ queryKey: ['joinedServers'] });
           
         });
+
+        // Handle current text channel updates.
+        // If the owner of the text channel updates the text channel, all users in the server will receive the updated text channel.
+        client.subscribe(`/topic/servers/${currentServer.serverID}/channels/update`, (response) => {
+          const channel = JSON.parse(response.body);
+
+          console.log("Updated Channel: ", channel);
+
+          // Update the current text channel if it is the updated channel
+          if (currentTextChannel?.channelID === channel.channelID) {
+            queryClient.setQueryData<Channel | null>(['currentTextChannel'], channel);
+          }
+
+
+          // Update the current voice channel if it is the updated channel
+          else if (currentVoiceChannel?.channelID === channel.channelID) {
+            queryClient.setQueryData<Channel | null>(['currentVoiceChannel'], channel);
+          }
+
+          // Update the channels list
+          if (channels) {
+            const updatedChannels = channels.map((c) => {
+              if (c.channelID === channel.channelID) {
+                return channel;
+              }
+              return c;
+            });
+
+            queryClient.setQueryData<Channel[]>(['channels'], updatedChannels);
+          }
+
+        });
+
+        // Handle new channel creation
+        // If the owner of the server creates a new channel, all users in the server will receive the new channel.
+        client.subscribe(`/topic/servers/${currentServer.serverID}/channels/new`, (response) => {
+          const channel = JSON.parse(response.body);
+          console.log("New Channel: ", channel);
+          // Just refresh the list of channels
+          queryClient.invalidateQueries({ queryKey: ['channels'] });
+        });
+
+        // Handle channel deletion
+        // If the owner of the server deletes a channel, all users in the server will receive the deleted channel.
+        client.subscribe(`/topic/servers/${currentServer.serverID}/channels/delete`, (response) => {
+          const channel = JSON.parse(response.body);
+          console.log("Deleted Channel: ", channel);
+
+          // If in the deleted text channel
+          if (currentTextChannel?.channelID === channel.channelID) {
+            queryClient.setQueryData<Channel | null>(['currentTextChannel'], null);
+          }
+
+          // If in the deleted voice channel  
+          if (currentVoiceChannel?.channelID === channel.channelID) {
+            queryClient.setQueryData<Channel | null>(['currentVoiceChannel'], null);
+          }
+
+          // Then refresh the list of channels
+          queryClient.invalidateQueries({ queryKey: ['channels'] });
+        });
       }
     }
 
@@ -193,6 +255,9 @@ const App = () => {
     return () => {
       if (client.connected) {
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/update`);
+        client.unsubscribe(`/topic/servers/${currentServer?.serverID}/delete`);
+        client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/update`);
+        client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/new`);
         client.unsubscribe('/topic/error');
       }
     }

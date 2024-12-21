@@ -40,6 +40,8 @@ public class ServerController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /// ------------------ SERVERS ------------------ ///
+
     // Create a server given the user's serverName and authToken
     @PostMapping(path="/create")
     public ResponseEntity createServer(@RequestBody Server serverRequest, @CookieValue("authToken") String authToken) {
@@ -272,6 +274,8 @@ public class ServerController {
         }
     }
 
+    /// ------------------ CHANNELS ------------------ ///
+
     // Create a channel in the specified servera
     @PostMapping(path="/{serverID}/channels/create")
     public ResponseEntity createChannel(@PathVariable String serverID, @RequestBody Channel channelRequest, @CookieValue("authToken") String authToken) {
@@ -334,6 +338,8 @@ public class ServerController {
             Channel newChannel = new Channel(channelID, channelName, serverID, channelDescription, channelOrder, type);
             channelRepository.save(newChannel);
 
+            messagingTemplate.convertAndSend("/topic/servers/" + serverID + "/channels/new", newChannel);
+
             return new ResponseEntity<Channel>(newChannel, HttpStatus.OK);
 
         } catch (Exception e) {
@@ -388,6 +394,9 @@ public class ServerController {
             // Delete Channel
             channelRepository.deleteById(channelID);
 
+
+            messagingTemplate.convertAndSend("/topic/servers/" + serverID + "/channels/delete", channel);
+
             return new ResponseEntity<SuccessMessage>(new SuccessMessage("Channel deleted."), HttpStatus.OK);
 
         } catch (Exception e) {
@@ -437,6 +446,8 @@ public class ServerController {
             // Save channel
             channelRepository.save(channel);
 
+            messagingTemplate.convertAndSend("/topic/servers/" + serverID + "/channels/update", channel);
+
             return new ResponseEntity<Channel>(channel, HttpStatus.OK);
 
         } catch (Exception e) {
@@ -444,7 +455,6 @@ public class ServerController {
             return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     // Get channels in a server
     @GetMapping(path="/{serverID}/channels")
@@ -471,6 +481,8 @@ public class ServerController {
             return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    /// ------------------ USERS ------------------ ///
 
     // Get users in a server
     @GetMapping(path="/{serverID}/users")

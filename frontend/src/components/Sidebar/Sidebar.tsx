@@ -181,17 +181,25 @@ const ServerBar = ({setShowServerSettings, setNewChannelType, setCreatingChannel
 
 
   useEffect(() => {
-    // Invalidate channels query on server change
-    if (currentServer?.serverID !== channels?.[0].serverID)
+    // On server change, refresh channels
+    if (currentServer) {
       queryClient.invalidateQueries({ queryKey: ['channels'] });
+    }
+  }, [currentServer]);
 
+
+  useEffect(() => {
     // Set the first channel as the current channel
     if (channels && (!currentTextChannel || currentTextChannel.serverID !== channels[0].serverID)) {
       queryClient.setQueryData<Channel>(['currentTextChannel'], channels.filter(channel => channel.type === 'text')[0]);
     }
 
-  }, [currentServer, channels]);
+    // if channel is deleted, set the first channel as the current channel
+    if (channels && currentTextChannel && !channels.find(channel => channel.channelID === currentTextChannel.channelID)) {
+      queryClient.setQueryData<Channel>(['currentTextChannel'], channels.filter(channel => channel.type === 'text')[0]);
+    }
 
+  }, [currentServer, channels, currentTextChannel]);
 
   return (
 
