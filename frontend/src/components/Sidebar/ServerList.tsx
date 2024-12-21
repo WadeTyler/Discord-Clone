@@ -1,10 +1,10 @@
 
 import { IconBrandDiscordFilled, IconPlus } from '@tabler/icons-react';
 import ServerButton from './ServerButton';
-import { SetStateAction, useState } from 'react';
+import { SetStateAction, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Channel, Server } from '../../types/types';
+import { Channel, Friend, Server } from '../../types/types';
 import { ServerIconSkeleton } from '../skeletons/Skeletons';
 
 const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetStateAction<boolean>>;}) => {
@@ -13,9 +13,18 @@ const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetS
   const queryClient = useQueryClient();
   const {data:servers, isPending:isLoadingServers} = useQuery<Server[] | null>({ queryKey: ['joinedServers'] });
   const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
+  const { data:friendRequests } = useQuery<Friend[]>({ queryKey: ['friendRequests'] });
 
   // States
   const [hoveringNewServer, setNewServerHover] = useState<boolean>(false);
+  const [notifications, setNotifications] = useState<number>(0);
+
+  useEffect(() => {
+    // Update Notification count everytime friendRequests changes, TODO: add direct messages later
+    if (friendRequests) {
+      setNotifications(friendRequests.length);
+    }
+  }, [friendRequests]);
 
   // Handle Go Home
   const handleGoHome = () => {
@@ -29,8 +38,13 @@ const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetS
       {/* Home */}
       <div 
       onClick={handleGoHome}
-      className=" w-12 h-12 flex items-center justify-center bg-primary cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 p-2">
+      className=" w-12 h-12 flex items-center justify-center bg-primary cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 p-2 relative">
         <IconBrandDiscordFilled className='text-4xl w-full h-full'/>
+        {notifications > 0 && (
+          <div className="w-4 h-4 flex items-center z-30 justify-center text-white bg-red-500 text-xs rounded-full absolute bottom-0 right-0">
+            {notifications}
+          </div>
+        )}
       </div>
 
       <hr className="w-full my-2 border-primary"/>
