@@ -258,6 +258,7 @@ const App = () => {
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/delete`);
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/update`);
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/new`);
+        client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/delete`);
         client.unsubscribe('/topic/error');
       }
     }

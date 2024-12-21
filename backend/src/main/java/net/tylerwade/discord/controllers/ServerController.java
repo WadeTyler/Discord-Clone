@@ -512,7 +512,6 @@ public class ServerController {
         }
     }
 
-
     /// ------------------ UTIL ------------------ ///
 
     // Check if user is in server
