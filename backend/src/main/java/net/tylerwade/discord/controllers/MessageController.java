@@ -44,41 +44,42 @@ public class MessageController {
     // Send a new message over websocket
     @MessageMapping("/newMessage")
     public void newMessage(Message messageRequest) {
+        String userID = null;
         try {
-            String userID = messageRequest.getSenderID();
+            userID = messageRequest.getSenderID();
 
             // Check real user
             User user = userRepository.findById(userID).get();
             if (user == null) {
-                messagingTemplate.convertAndSend("/topic/error", new ResponseEntity<ErrorMessage>(new ErrorMessage("User not found."), HttpStatus.NOT_FOUND));
+                messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("User not found."), HttpStatus.NOT_FOUND));
             }
 
             // Check for message content
             if (messageRequest.getContent().isEmpty()) {
-                messagingTemplate.convertAndSend("/topic/error", new ResponseEntity<ErrorMessage>(new ErrorMessage("Message content is required."), HttpStatus.BAD_REQUEST));
+                messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("Message content is required."), HttpStatus.BAD_REQUEST));
             }
 
             // Check for channelID
             if (messageRequest.getChannelID().isEmpty()) {
-                messagingTemplate.convertAndSend("/topic/error", new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel ID is required."), HttpStatus.BAD_REQUEST));
+                messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel ID is required."), HttpStatus.BAD_REQUEST));
             }
 
             // Check channel exists
             Channel channel = channelRepository.findById(messageRequest.getChannelID()).get();
             if (channel == null) {
-                messagingTemplate.convertAndSend("/topic/error", new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel not found."), HttpStatus.NOT_FOUND));
+                messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel not found."), HttpStatus.NOT_FOUND));
             }
 
             // Check server exists
             Server server = serverRepository.findById(channel.getServerID()).get();
             if (server == null) {
-                messagingTemplate.convertAndSend("/topic/error", new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND));
+                messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND));
             }
 
             // Check user in server
             ServerJoinPK serverJoinPK = new ServerJoinPK(server.getServerID(), userID);
             if (!serverJoinsRepository.existsById(serverJoinPK)) {
-                messagingTemplate.convertAndSend("/topic/error", new ResponseEntity<ErrorMessage>(new ErrorMessage("User not in server."), HttpStatus.UNAUTHORIZED));
+                messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("User not in server."), HttpStatus.UNAUTHORIZED));
             }
 
             // Get Current Timestamp
@@ -97,7 +98,7 @@ public class MessageController {
 
         } catch (Exception e) {
             System.out.println("Exception in newMessage(): " + e.getMessage());
-            messagingTemplate.convertAndSend("/topic/error", new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR));
+            messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 

@@ -151,7 +151,7 @@ const App = () => {
     if (client.connected) {
 
       // Handle websocket error messages
-      client.subscribe('/topic/error', (response) => {
+      client.subscribe(`/topic/error/${authUser?.userID}`, (response) => {
         const data = JSON.parse(response.body).body;
         toast.error(data.error);
       });
@@ -259,10 +259,10 @@ const App = () => {
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/update`);
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/new`);
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/delete`);
-        client.unsubscribe('/topic/error');
+        client.unsubscribe(`/topic/error/${authUser?.userID}`);
       }
     }
-  }, [client, currentServer])
+  }, [client, currentServer, channels, currentTextChannel, currentVoiceChannel, queryClient, authUser]);
 
   /* --------------------------------------------------------------------------------------- */
 
