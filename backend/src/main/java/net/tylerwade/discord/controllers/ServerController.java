@@ -11,6 +11,7 @@ import net.tylerwade.discord.repositories.ServerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,9 @@ import java.util.UUID;
 @RequestMapping(path="/api/servers")
 public class ServerController {
 
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
     private ServerRepository serverRepository;
@@ -102,6 +106,8 @@ public class ServerController {
             server.setServerName(updateRequest.getServerName());
             serverRepository.save(server);
 
+            messagingTemplate.convertAndSend("/topic/servers/" + serverID + "/update", server);
+
             return new ResponseEntity<Server>(server, HttpStatus.OK);
 
         } catch (Exception e) {
@@ -139,6 +145,9 @@ public class ServerController {
 
             // Delete Server
             serverRepository.deleteById(serverID);
+
+            // Send all users in the server
+            messagingTemplate.convertAndSend("/topic/servers/" + serverID + "/delete", server);
 
             return new ResponseEntity<SuccessMessage>(new SuccessMessage("Server Successfully deleted."), HttpStatus.OK);
 

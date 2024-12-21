@@ -148,12 +148,55 @@ const App = () => {
 
   useEffect(() => {
     if (client.connected) {
+
+      // Handle websocket error messages
       client.subscribe('/topic/error', (response) => {
         const data = JSON.parse(response.body).body;
         toast.error(data.error);
-      })
+      });
+
+      
+      if (currentServer) {
+
+        // Handle current server updates.
+        // If the owner of the server updates the server, all users in the server will receive the updated server.
+        client.subscribe(`/topic/servers/${currentServer.serverID}/update`, (response) => {
+          const data = JSON.parse(response.body);
+          queryClient.setQueryData<Server>(['currentServer'], data);
+          queryClient.invalidateQueries({ queryKey: ['joinedServers'] });
+        });
+
+        // Handle current server deletion.
+        // If the owner of the server deletes the server, all users in the server will be redirected to the home page.
+        client.subscribe(`/topic/servers/${currentServer.serverID}/delete`, (response) => {
+
+          const server = JSON.parse(response.body);
+
+          // If in a text channel in that server
+          if (currentTextChannel?.serverID === server.serverID) {
+            queryClient.setQueryData<Channel | null>(['currentTextChannel'], null);
+          }
+
+          // If in a voice channel in that server
+          if (currentVoiceChannel?.serverID === server.serverID) {
+            queryClient.setQueryData<Channel | null>(['currentVoiceChannel'], null);
+          }
+
+          queryClient.setQueryData<Server | null>(['currentServer'], null);
+          queryClient.invalidateQueries({ queryKey: ['joinedServers'] });
+          
+        });
+      }
     }
-  }, [client])
+
+    // Cleanup
+    return () => {
+      if (client.connected) {
+        client.unsubscribe(`/topic/servers/${currentServer?.serverID}/update`);
+        client.unsubscribe('/topic/error');
+      }
+    }
+  }, [client, currentServer])
 
   /* --------------------------------------------------------------------------------------- */
 
