@@ -13,9 +13,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Create a new WebSocket Client
   const client = new Client({
     brokerURL: BROKER_URL,
-    debug: (str) => {
-      console.log("WebSocket Client Debug: ", str);
-    },
+    // debug: (str) => {
+    //   console.log("WebSocket Client Debug: ", str);
+    // },
   });
 
   return <WebSocketContext.Provider value={client}>{children}</WebSocketContext.Provider>

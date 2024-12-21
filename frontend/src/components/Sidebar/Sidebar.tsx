@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import ServerSettings from "../server-settings/ServerSettings";
 import ChannelSettings from "../channel-settings/ChannelSettings";
 import UserAvatar from "../users/UserAvatar";
+import HomeSidebar from "./HomeSidebar";
 // import { filter } from "framer-motion/client";
 
 const Sidebar = () => {
@@ -40,6 +41,7 @@ const Sidebar = () => {
   return (
     <div className="min-w-72 w-72 h-screen bg-secondary flex relative">
 
+      
       {/* Creating Server */}
       {creatingServer && <CreatingServer setCreatingServer={setCreatingServer} />}
 
@@ -51,6 +53,11 @@ const Sidebar = () => {
 
       {/* Show the ServerBar for the selected server */}
       {currentServer && <ServerBar setShowServerSettings={setShowServerSettings} setCreatingChannel={setCreatingChannel} setNewChannelType={setNewChannelType} editChannel={editChannel} /> }
+
+      {/* Home Mode */}
+      {!currentServer && (
+        <HomeSidebar />
+      )}
 
       {/* Show server settings */}
       {showServerSettings && <ServerSettings setShowServerSettings={setShowServerSettings} />}

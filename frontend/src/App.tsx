@@ -3,13 +3,13 @@ import Sidebar from './components/Sidebar/Sidebar'
 import { Routes, Route } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import LoginPage from './pages/LoginPage'
-import { Channel, Server, User } from './types/types'
+import { Channel, Friend, Server, User } from './types/types'
 import { useEffect } from 'react'
 import { LoadingSpinnerLG } from './components/lib/util/LoadingSpinner'
 import toast from 'react-hot-toast'
 import { useWebSocket } from './context/WebSocketContext'
 import ChannelPage from './pages/ChannelPage'
-import DirectMessages from './pages/DirectMessages'
+import Home from './pages/Home'
 
 const App = () => {
 
@@ -71,15 +71,11 @@ const App = () => {
   const { data:currentVoiceChannel } = useQuery<Channel | null>({ queryKey: ['currentVoiceChannel'] });
   const { data:channels } = useQuery<Channel[]>({ queryKey: ['channels'] });
   const { data:usersInServer } = useQuery<User[]>({ queryKey: ['usersInServer'] });
+  const { data:friends } = useQuery<Friend[]>({ queryKey: ['friends'] });
+  const { data:friendRequests } = useQuery<Friend[]>({ queryKey: ['friendRequests'] });
 
   useEffect(() => {
     console.log("authUser: ", authUser);
-
-    // Set the server to the first server in the joined servers list
-    if (authUser && joinedServers && currentServer === null) {
-      console.log("Setting initial server to: ", joinedServers[0]);
-      queryClient.setQueryData<Server>(['currentServer'], joinedServers[0]);
-    }
 
     // Debugging
     console.log("Current Server: ", currentServer);
@@ -101,6 +97,87 @@ const App = () => {
       destination: "/app/onConnect",
       body: authUser?.userID,
     });
+
+    // Handle websocket error messages
+    client.subscribe(`/topic/error/${authUser?.userID}`, (response) => {
+      const data = response.body;
+      console.log("Error: ", data);
+      toast.error(data);
+    });
+
+    client.subscribe(`/topic/success/${authUser?.userID}`, (response) => {
+      const data = response.body;
+      toast.success(data);
+    });
+
+
+    // Subscribe to friends
+    client.subscribe(`/topic/friends/${authUser?.userID}`, (response) => {
+      const friends = JSON.parse(response.body);
+      console.log("Friends: ", friends);
+      queryClient.setQueryData<Friend[]>(['friends'], friends);
+    });
+
+    // get friends
+    const getFriends = async () => {
+      client.publish({ 
+        destination: "/app/friends", 
+        body: authUser?.userID 
+      });
+    };
+    getFriends();
+
+    // Subscribe to new friend requests
+    client.subscribe(`/topic/friends/requests/new/${authUser?.userID}`, (response) => {
+      const data = JSON.parse(response.body);
+      toast.success("You have a new friend request. From " + data.username + "#" + data.tag);
+      getFriendRequests();
+    });
+
+    // get friend requests
+    const getFriendRequests = async () => {
+      client.publish({ 
+        destination: "/app/friends/requests", 
+        body: authUser?.userID 
+      });
+    }
+    getFriendRequests();
+
+    // Subscribe to all friend requests
+    client.subscribe(`/topic/friends/requests/${authUser?.userID}`, (response) => {
+      const requests = JSON.parse(response.body);
+      console.log("Friend Requests: ", requests);
+      queryClient.setQueryData<Friend[]>(['friendRequests'], requests);
+    });
+
+    // Subscribe to accepted friend requests
+    client.subscribe(`/topic/friends/requests/accept/${authUser?.userID}`, (response) => {
+      const data = response.body;
+      console.log("Accepted Friend Request: ", data);
+      toast.success(data);
+
+      // reload friends and friend requests
+      getFriendRequests();
+      getFriends();
+    });
+
+    // Subscribe to declined friend requests
+    client.subscribe(`/topic/friends/requests/decline/${authUser?.userID}`, (response) => {
+      const data = response.body;
+      toast.success(data);
+      // reload friend requests
+      getFriendRequests();
+    });
+
+    // Subscribe to friend removal
+    client.subscribe(`/topic/friends/remove/${authUser?.userID}`, (response) => {
+      const data = response.body;
+      console.log(data);
+      // reload friends
+      getFriends();
+    })
+
+
   };
 
   // On Disconnecting from WebSocket Broker
@@ -150,14 +227,8 @@ const App = () => {
 
   useEffect(() => {
     if (client.connected) {
-
-      // Handle websocket error messages
-      client.subscribe(`/topic/error/${authUser?.userID}`, (response) => {
-        const data = JSON.parse(response.body).body;
-        toast.error(data.error);
-      });
-
       
+
       if (currentServer) {
 
         // Handle current server updates.
@@ -294,10 +365,27 @@ const App = () => {
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/update`);
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/new`);
         client.unsubscribe(`/topic/servers/${currentServer?.serverID}/channels/delete`);
-        client.unsubscribe(`/topic/error/${authUser?.userID}`);
+        client.unsubscribe(`/topic/servers/${currentServer?.serverID}/users/online`);
+        client.unsubscribe(`/topic/servers/${currentServer?.serverID}/users/offline`);
+        client.unsubscribe(`/topic/friends/${authUser?.userID}`);
       }
     }
   }, [client, currentServer, channels, currentTextChannel, currentVoiceChannel, queryClient, authUser, usersInServer]);
+
+  // Get friends on load
+  useEffect(() => {
+    if (client.connected && authUser) {
+
+      
+    }
+
+    // Cleanup
+    return () => {
+      if (client.connected && authUser) {
+        client.unsubscribe(`/topic/friends/${authUser.userID}`);
+      }
+    }
+  }, [authUser, client]);
 
   /* --------------------------------------------------------------------------------------- */
 
@@ -313,9 +401,8 @@ const App = () => {
     <div className="flex">
         {authUser && <Sidebar />}
         <Routes>
-          <Route path="/" element={authUser ? <ChannelPage /> : <LoginPage />} />
-          <Route path="/dm" element={authUser ? <DirectMessages /> : <LoginPage />} />
-          <Route path="/channels/:serverID/:channelID" element={authUser ? <ChannelPage /> : <LoginPage />} />
+          <Route path="/" element={!authUser ? <LoginPage /> : (currentServer ? <ChannelPage /> : <Home />)} />
+          <Route path="/login" element={!authUser ? <LoginPage /> : (currentServer ? <ChannelPage /> : <Home />)} />
           <Route path="*" element={authUser ? <ChannelPage /> : <LoginPage />} />
         </Routes>
       </div>

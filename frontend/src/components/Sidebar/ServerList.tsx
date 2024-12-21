@@ -3,24 +3,33 @@ import { IconBrandDiscordFilled, IconPlus } from '@tabler/icons-react';
 import ServerButton from './ServerButton';
 import { SetStateAction, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
-import { Server } from '../../types/types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Channel, Server } from '../../types/types';
 import { ServerIconSkeleton } from '../skeletons/Skeletons';
 
 const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetStateAction<boolean>>;}) => {
 
   // Query Data
+  const queryClient = useQueryClient();
   const {data:servers, isPending:isLoadingServers} = useQuery<Server[] | null>({ queryKey: ['joinedServers'] });
   const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
 
   // States
   const [hoveringNewServer, setNewServerHover] = useState<boolean>(false);
 
+  // Handle Go Home
+  const handleGoHome = () => {
+    queryClient.setQueryData<Server | null>(['currentServer'], null);
+    queryClient.setQueryData<Channel | null>(['currentTextChannel'], null);
+  }
+
   return (
     <div className="flex flex-col gap-2 items-center h-screen py-2 bg-tertiary relative w-16">
 
-      {/* Direct Messages */}
-      <div className=" w-12 h-12 flex items-center justify-center bg-primary cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 p-2">
+      {/* Home */}
+      <div 
+      onClick={handleGoHome}
+      className=" w-12 h-12 flex items-center justify-center bg-primary cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 p-2">
         <IconBrandDiscordFilled className='text-4xl w-full h-full'/>
       </div>
 

@@ -16,4 +16,6 @@ public interface UserRepository extends CrudRepository<User, String> {
 
     boolean existsByTag(String tag);
 
+    @Query(value = "SELECT * FROM users WHERE username = ?1 AND tag = ?2", nativeQuery = true)
+    User findByUsernameAndTag(String username, String tag);
 }

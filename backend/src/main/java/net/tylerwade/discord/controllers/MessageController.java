@@ -52,34 +52,40 @@ public class MessageController {
             User user = userRepository.findById(userID).get();
             if (user == null) {
                 messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("User not found."), HttpStatus.NOT_FOUND));
+                return;
             }
 
             // Check for message content
             if (messageRequest.getContent().isEmpty()) {
                 messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("Message content is required."), HttpStatus.BAD_REQUEST));
+                return;
             }
 
             // Check for channelID
             if (messageRequest.getChannelID().isEmpty()) {
                 messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel ID is required."), HttpStatus.BAD_REQUEST));
+                return;
             }
 
             // Check channel exists
             Channel channel = channelRepository.findById(messageRequest.getChannelID()).get();
             if (channel == null) {
                 messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel not found."), HttpStatus.NOT_FOUND));
+                return;
             }
 
             // Check server exists
             Server server = serverRepository.findById(channel.getServerID()).get();
             if (server == null) {
                 messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND));
+                return;
             }
 
             // Check user in server
             ServerJoinPK serverJoinPK = new ServerJoinPK(server.getServerID(), userID);
             if (!serverJoinsRepository.existsById(serverJoinPK)) {
                 messagingTemplate.convertAndSend("/topic/error/" + userID, new ResponseEntity<ErrorMessage>(new ErrorMessage("User not in server."), HttpStatus.UNAUTHORIZED));
+                return;
             }
 
             // Get Current Timestamp

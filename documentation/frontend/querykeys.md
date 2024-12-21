@@ -9,3 +9,5 @@ List of query keys:
 ### currentTextChannel
 ### currentVoiceChannel
 ### usersInServer
+### friends
+### friendRequests

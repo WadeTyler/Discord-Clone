@@ -62,3 +62,25 @@ password: ****
 | serverID | varchar(512) | NO   | MUL | NULL    |       |
 | userID   | varchar(512) | NO   | MUL | NULL    |       |
 +----------+--------------+------+-----+---------+-------+
+
+
+#### direct_messages
++-----------------+--------------+------+-----+---------+----------------+
+| Field           | Type         | Null | Key | Default | Extra          |
++-----------------+--------------+------+-----+---------+----------------+
+| directMessageID | bigint       | NO   | PRI | NULL    | auto_increment |
+| senderID        | varchar(512) | NO   |     | NULL    |                |
+| receiverID      | varchar(512) | NO   |     | NULL    |                |
+| timestamp       | timestamp    | NO   |     | NULL    |                |
+| content         | text         | NO   |     | NULL    |                |
++-----------------+--------------+------+-----+---------+----------------+
+
+#### friends
++----------+--------------+------+-----+---------+----------------+
+| Field    | Type         | Null | Key | Default | Extra          |
++----------+--------------+------+-----+---------+----------------+
+| id       | bigint       | NO   | PRI | NULL    | auto_increment |
+| friend1  | varchar(512) | NO   | MUL | NULL    |                |
+| friend2  | varchar(512) | NO   | MUL | NULL    |                |
+| accepted | tinyint      | YES  |     | 0       |                |
++----------+--------------+------+-----+---------+----------------+

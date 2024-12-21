@@ -34,3 +34,11 @@ export type Message = {
   content: string;
   senderAvatar: string;
 }
+
+export type Friend = {
+  userID: string;
+  username: string;
+  tag: string;
+  avatar: string;
+  status: string;
+}
