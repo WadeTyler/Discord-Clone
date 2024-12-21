@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Friend, User } from '../../types/types'
 import UserAvatar from '../users/UserAvatar';
-import { IconDotsVertical, IconMessage, IconMessageCircleFilled } from '@tabler/icons-react';
+import { IconDotsVertical, IconMessageCircleFilled } from '@tabler/icons-react';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { useQuery } from '@tanstack/react-query';
 
@@ -42,7 +42,7 @@ const FriendCard = ({friend}: {
 
 export default FriendCard
 
-const FriendOptions = ({friend, setViewingOptions, setRemovingFriend}: {
+const FriendOptions = ({setViewingOptions, setRemovingFriend}: {
   friend: Friend;
   setViewingOptions: React.Dispatch<React.SetStateAction<boolean>>;
   setRemovingFriend: React.Dispatch<React.SetStateAction<boolean>>;

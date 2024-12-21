@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+
 import { Friend, User } from '../../types/types'
 import UserAvatar from '../users/UserAvatar';
 import { IconCheck, IconX } from '@tabler/icons-react';

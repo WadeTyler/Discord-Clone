@@ -1,5 +1,3 @@
-import { IconFriends } from '@tabler/icons-react';
-import React, { useState } from 'react'
 
 const HomeSidebar = () => {
 
