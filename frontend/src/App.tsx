@@ -65,11 +65,12 @@ const App = () => {
       }
     });
 
-  // Current Server, Current Text Channel, Current Voice Channel, channels
+  // Query Data
   const { data:currentServer } = useQuery<Server | null>({ queryKey: ['currentServer'] });
   const { data:currentTextChannel } = useQuery<Channel | null>({ queryKey: ['currentTextChannel'] });
   const { data:currentVoiceChannel } = useQuery<Channel | null>({ queryKey: ['currentVoiceChannel'] });
   const { data:channels } = useQuery<Channel[]>({ queryKey: ['channels'] });
+  const { data:usersInServer } = useQuery<User[]>({ queryKey: ['usersInServer'] });
 
   useEffect(() => {
     console.log("authUser: ", authUser);
@@ -248,6 +249,40 @@ const App = () => {
           // Then refresh the list of channels
           queryClient.invalidateQueries({ queryKey: ['channels'] });
         });
+
+        // Handle users going online
+        // If a user goes online, update the user's list to show that.
+        client.subscribe(`/topic/servers/${currentServer.serverID}/users/online`, (response) => {
+          const user = JSON.parse(response.body);
+  
+          if (usersInServer) {
+            const updatedUsers = usersInServer.map((u) => {
+              if (u.userID === user.userID) {
+                return user;
+              }
+              return u;
+            });
+
+            queryClient.setQueryData<User[]>(['usersInServer'], updatedUsers);
+          }
+        });
+
+        // Handle users going offline
+        // If a user goes offline, update the user's list to show that.
+        client.subscribe(`/topic/servers/${currentServer.serverID}/users/offline`, (response) => {
+          const user = JSON.parse(response.body);
+  
+          if (usersInServer) {
+            const updatedUsers = usersInServer.map((u) => {
+              if (u.userID === user.userID) {
+                return user;
+              }
+              return u;
+            });
+
+            queryClient.setQueryData<User[]>(['usersInServer'], updatedUsers);
+          }
+        });
       }
     }
 
@@ -262,7 +297,7 @@ const App = () => {
         client.unsubscribe(`/topic/error/${authUser?.userID}`);
       }
     }
-  }, [client, currentServer, channels, currentTextChannel, currentVoiceChannel, queryClient, authUser]);
+  }, [client, currentServer, channels, currentTextChannel, currentVoiceChannel, queryClient, authUser, usersInServer]);
 
   /* --------------------------------------------------------------------------------------- */
 
