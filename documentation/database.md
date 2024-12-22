@@ -5,7 +5,7 @@ discord
 
 ## MySQL Dev Users
 username: jimmy  
-password: ****  
+password: ****
 
 ## Tables
 
