@@ -17,6 +17,7 @@ const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetS
 
   // States
   const [hoveringNewServer, setNewServerHover] = useState<boolean>(false);
+  const [hoveringDirectMessages, setDirectMessagesHover] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<number>(0);
 
   useEffect(() => {
@@ -38,19 +39,24 @@ const ServerList = ({setCreatingServer}: {setCreatingServer: React.Dispatch<SetS
       {/* Home */}
       <div 
       onClick={handleGoHome}
-      className=" w-12 h-12 flex items-center justify-center bg-primary cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 p-2 relative">
+      onMouseEnter={() => setDirectMessagesHover(true)}
+      onMouseLeave={() => setDirectMessagesHover(false)}
+      className="w-12 h-12 flex items-center justify-center bg-primary cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 p-2 relative">
         <IconBrandDiscordFilled className='text-4xl w-full h-full'/>
         {notifications > 0 && (
           <div className="w-4 h-4 flex items-center z-30 justify-center text-white bg-red-500 text-xs rounded-full absolute bottom-0 right-0">
             {notifications}
+
           </div>
         )}
+
+{hoveringDirectMessages && <HomeLabel />}
       </div>
 
       <hr className="w-full my-2 border-primary"/>
 
       {/* Server List */}
-      <div className="flex flex-col gap-2 items-center h-fit w-full relative">
+      <div className="flex flex-col gap-2 items-center h-fit w-full relative p-2">
         {!isLoadingServers && servers?.map(server => (
           <div className="relative">
             <ServerButton key={server.serverID} server={server} />
@@ -86,11 +92,24 @@ export default ServerList
 const NewServerLabel = () => {
   return (
     <motion.div 
-    initial={{ scale: 0.9 }}
+    initial={{ scale: 0.9, translateX: "100%"  }}
     whileInView={{ scale: 1 }}
     transition={{ duration: .1 }}
-    className="bg-tertiary absolute top-1/2 -translate-y-1/2 left-[150%] z-50 max-w-24 px-2 py-1 rounded">
+    className="bg-tertiary absolute z-40 max-w-24 px-2 py-1 rounded">
       <p className="text-sm w-full whitespace-nowrap text-accent">Add a Server</p>
+    </motion.div>
+  )
+
+}
+
+const HomeLabel = () => {
+  return (
+    <motion.div 
+    initial={{ scale: 0.9, translateX: "100%"  }}
+    whileInView={{ scale: 1 }}
+    transition={{ duration: .1 }}
+    className="bg-tertiary absolute z-40 max-w-36 px-2 py-1 rounded">
+      <p className="text-sm w-full whitespace-nowrap text-accent">Direct Messages</p>
     </motion.div>
   )
 

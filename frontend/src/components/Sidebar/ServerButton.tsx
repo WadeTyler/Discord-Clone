@@ -10,7 +10,7 @@ const ServerButton = ({server}: {server: Server}) => {
   const queryClient = useQueryClient();
 
   return (
-    <div className="relative px-4">
+    <div className="relative px-4 bg-blue-500 flex items-center justify-center">
       <div 
       onClick={() => {
         queryClient.setQueryData<Server>(['currentServer'], server);
@@ -34,10 +34,10 @@ const ServerLabel = ({server}: {server: Server}) => {
 
   return (
     <motion.div 
-    initial={{ scale: 0.9 }}
+    initial={{ scale: 0.9, translateX: "100%"  }}
     whileInView={{ scale: 1 }}
     transition={{ duration: .2 }}
-    className="bg-tertiary absolute top-1/2 -translate-y-1/2 left-[150%] z-50 px-2 py-1 rounded">
+    className="bg-tertiary absolute z-40 px-2 py-1 rounded">
       <p className="text-sm w-full whitespace-nowrap">{server.serverName}</p>
     </motion.div>
   )
