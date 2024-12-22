@@ -1,8 +1,7 @@
-import { Message } from "../types/types"
+import { DirectMessage, Message } from "../types/types"
 
 const MessageComponent = ({message}: {
-  message: Message;
-
+  message: Message | DirectMessage;
 
 }) => {
   return (

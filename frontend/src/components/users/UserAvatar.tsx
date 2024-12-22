@@ -2,7 +2,7 @@
 
 const UserAvatar = ({avatar, status, backgroundColor}: {
   avatar?: string;
-  status: string;
+  status?: string;
   backgroundColor?: string;
 }) => {
   return (

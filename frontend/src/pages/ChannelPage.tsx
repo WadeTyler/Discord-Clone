@@ -296,7 +296,7 @@ const Messages = () => {
         <div className="flex items-center justify-center bg-accentDark text-primaryLight rounded-full cursor-pointer"><IconPlus /></div>
         <input type="text" 
         value={userInput}
-        className="w-full h-full bg-transparent text-sm placeholder:text-accentDark focus:outline-none" placeholder={`Message #${currentTextChannel?.channelName}`} onChange={(e) => setUserInput(e.target.value)}/>
+        className="w-full h-full bg-transparent text-sm placeholder:text-accentDark focus:outline-none rounded" placeholder={`Message #${currentTextChannel?.channelName}`} onChange={(e) => setUserInput(e.target.value)}/>
       </form>
     
     </div>

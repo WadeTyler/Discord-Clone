@@ -11,3 +11,5 @@ List of query keys:
 ### usersInServer
 ### friends
 ### friendRequests
+### directMessageLabels
+### currentDmTarget

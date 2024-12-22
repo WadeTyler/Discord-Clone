@@ -1,4 +1,4 @@
-import { Channel, Message, Server, User } from "../types/types";
+import { Channel, DirectMessage, DMChannel, Message, Server, User } from "../types/types";
 
 
 export const authUser: User = {
@@ -140,5 +140,41 @@ export const server1Users: User[] = [
     tag: '#1245',
     status: 'Online',
     avatar: ''
+  }
+]
+
+export const dmChannels: DMChannel[] = [
+  {
+    dmChannelID: '1',
+    avatar: '',
+    createdAt: '2024-09-01T12:00:00',
+    channelName: 'Jimmy, Sunny',
+    lastModified: '2024-09-01T12:00:00'
+  },
+  {
+    dmChannelID: '2',
+    avatar: '',
+    createdAt: '2024-09-01T12:30:00',
+    channelName: 'Sunny',
+    lastModified: '2024-09-01T12:30:00'
+  },
+]
+
+export const channel1DirectMessages: DirectMessage[] = [
+  {
+    dmID: 1,
+    dmChannelID: '1',
+    senderID: '2cf4b0dd-86e5-459f-8db4-730546aad1f0',
+    senderUsername: 'james',
+    timestamp: '2024-09-01T12:00:00',
+    content: 'Hello World!'
+  },
+  {
+    dmID: 2,
+    dmChannelID: '1',
+    senderID: '2cf4b0dd-86e5-459f-8db4-730546aad1f0',
+    senderUsername: 'james',
+    timestamp: '2024-09-01T12:02:00',
+    content: 'Hello...?'
   }
 ]

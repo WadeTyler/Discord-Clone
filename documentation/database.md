@@ -63,19 +63,6 @@ password: ****
 | userID   | varchar(512) | NO   | MUL | NULL    |       |
 +----------+--------------+------+-----+---------+-------+
 
-
-#### direct_messages
-+-----------------+--------------+------+-----+---------+----------------+
-| Field           | Type         | Null | Key | Default | Extra          |
-+-----------------+--------------+------+-----+---------+----------------+
-| directMessageID | bigint       | NO   | PRI | NULL    | auto_increment |
-| senderID        | varchar(512) | NO   |     | NULL    |                |
-| receiverID      | varchar(512) | NO   |     | NULL    |                |
-| timestamp       | timestamp    | NO   |     | NULL    |                |
-| content         | text         | NO   |     | NULL    |                |
-| seen            | tinyint      | YES  |     | 0       |                |
-+-----------------+--------------+------+-----+---------+----------------+
-
 #### friends
 +----------+--------------+------+-----+---------+----------------+
 | Field    | Type         | Null | Key | Default | Extra          |
@@ -85,3 +72,36 @@ password: ****
 | friend2  | varchar(512) | NO   | MUL | NULL    |                |
 | accepted | tinyint      | YES  |     | 0       |                |
 +----------+--------------+------+-----+---------+----------------+
+
+
+#### dm_channels
++--------------+--------------+------+-----+---------+-------+
+| Field        | Type         | Null | Key | Default | Extra |
++--------------+--------------+------+-----+---------+-------+
+| dmChannelID  | varchar(512) | NO   | PRI | NULL    |       |
+| avatar       | varchar(512) | YES  |     | NULL    |       |
+| createdAt    | timestamp    | YES  |     | NULL    |       |
+| channelName  | varchar(50)  | YES  |     | NULL    |       |
+| lastModified | timestamp    | YES  |     | NULL    |       |
++--------------+--------------+------+-----+---------+-------+
+
+
+#### dm_junctions
++-------------+--------------+------+-----+---------+----------------+
+| Field       | Type         | Null | Key | Default | Extra          |
++-------------+--------------+------+-----+---------+----------------+
+| id          | bigint       | NO   | PRI | NULL    | auto_increment |
+| dmChannelID | varchar(512) | NO   | MUL | NULL    |                |
+| userID      | varchar(512) | NO   | MUL | NULL    |                |
++-------------+--------------+------+-----+---------+----------------+
+
+#### direct_messages
++-------------+--------------+------+-----+---------+----------------+
+| Field       | Type         | Null | Key | Default | Extra          |
++-------------+--------------+------+-----+---------+----------------+
+| dmID        | bigint       | NO   | PRI | NULL    | auto_increment |
+| dmChannelID | varchar(512) | NO   | MUL | NULL    |                |
+| senderID    | varchar(512) | NO   |     | NULL    |                |
+| timestamp   | timestamp    | NO   |     | NULL    |                |
+| content     | text         | YES  |     | NULL    |                |
++-------------+--------------+------+-----+---------+----------------+

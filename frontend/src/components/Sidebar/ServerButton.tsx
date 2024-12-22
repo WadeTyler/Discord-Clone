@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Server } from "../../types/types"
+import { DMChannel, Server } from "../../types/types"
 import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -14,6 +14,7 @@ const ServerButton = ({server}: {server: Server}) => {
       <div 
       onClick={() => {
         queryClient.setQueryData<Server>(['currentServer'], server);
+        queryClient.setQueryData<DMChannel | null>(['currentDmChannel'], null);
         console.log("ServerButton: Setting current server to: ", server);
       }}
       onMouseEnter={() => setHovering(true)}

@@ -3,13 +3,14 @@ import Sidebar from './components/Sidebar/Sidebar'
 import { Routes, Route } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import LoginPage from './pages/LoginPage'
-import { Channel, Friend, Server, User } from './types/types'
+import { Channel, DirectMessage, DMChannel, Friend, Server, User } from './types/types'
 import { useEffect } from 'react'
 import { LoadingSpinnerLG } from './components/lib/util/LoadingSpinner'
 import toast from 'react-hot-toast'
 import { useWebSocket } from './context/WebSocketContext'
 import ChannelPage from './pages/ChannelPage'
 import Home from './pages/Home'
+
 
 const App = () => {
 
@@ -73,6 +74,9 @@ const App = () => {
   const { data:usersInServer } = useQuery<User[]>({ queryKey: ['usersInServer'] });
   const { data:friends } = useQuery<Friend[]>({ queryKey: ['friends'] });
   const { data:friendRequests } = useQuery<Friend[]>({ queryKey: ['friendRequests'] });
+  const { data:dmChannels } = useQuery<DMChannel[]>({ queryKey: ['dmChannels'] });  
+  const { data:currentDmChannel } = useQuery<DMChannel | null>({ queryKey: ['currentDmChannel'] });
+
 
   useEffect(() => {
     console.log("authUser: ", authUser);
@@ -175,9 +179,23 @@ const App = () => {
       console.log(data);
       // reload friends
       getFriends();
-    })
+    });
 
+    // Subscribe to DM Channels
+    client.subscribe(`/topic/dm/channels/${authUser?.userID}`, (response) => {
+      const dmChannels: DMChannel[] = JSON.parse(response.body);
+      console.log("DM Channels: ", dmChannels);
+      queryClient.setQueryData<DMChannel[]>(['dmChannels'], dmChannels);
+    });
 
+    // Load DM Channels that the user is in on connect
+    const getDMChannels = () => {
+      client.publish({
+        destination: "/app/dm/channels",
+        body: authUser?.userID,
+      });
+    };
+    getDMChannels();
   };
 
   // On Disconnecting from WebSocket Broker
@@ -195,10 +213,38 @@ const App = () => {
       });
       console.log("Disconnected from WebSocket Broker");
     }
-
-    
   };
 
+
+  // Subscribe to all DM Channels
+  useEffect(() => {
+    if (client.connected && dmChannels) {
+      for (let dmChannel of dmChannels) {
+        client.subscribe(`/topic/dm/messages/new/${dmChannel.dmChannelID}`, (response) => {
+          const data: DirectMessage = JSON.parse(response.body);
+          console.log("New DM: ", data);
+          // This is the point discord would play the notification sound
+          // Just send a toast instead... :)
+
+          // If the user is not in the DM Channel, send a toast notification
+          if (!currentDmChannel || currentDmChannel.dmChannelID !== data.dmChannelID) {
+            toast.success("New Message from " + dmChannel.channelName);
+          }
+
+        });
+      }
+    }
+
+    // Cleanup
+    return () => {
+      if (client.connected && dmChannels) {
+        for (let dmChannel of dmChannels) {
+          client.unsubscribe(`/topic/dm/messages/new/${dmChannel.dmChannelID}`);
+        }
+      }
+    }
+
+  }, [client, dmChannels])
   useEffect(() => {
     if (authUser && !client.active) {
       client.activate();

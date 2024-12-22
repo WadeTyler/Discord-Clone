@@ -42,3 +42,21 @@ export type Friend = {
   avatar: string;
   status: string;
 }
+
+export type DirectMessage = {
+  dmID: number;
+  dmChannelID: string;
+  senderID: string;
+  senderUsername: string;
+  senderAvatar?: string;
+  timestamp: string;
+  content: string;
+}
+
+export type DMChannel = {
+  dmChannelID: string;
+  avatar?: string;
+  createdAt: string;
+  channelName: string;
+  lastModified: string;
+}

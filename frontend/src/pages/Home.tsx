@@ -1,24 +1,30 @@
 import { IconFriends, IconSearch } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
-import { Friend, User } from "../types/types";
+import { DMChannel, Friend, User } from "../types/types";
 import { useQuery } from "@tanstack/react-query";
 import FriendCard from "../components/friends/FriendCard";
 import FriendRequestCard from "../components/friends/FriendRequestCard";
 import { useWebSocket } from "../context/WebSocketContext";
+import DirectMessageHeaderBar from "../components/direct-messages/DirectMessageHeaderBar";
+import DirectMessagesContainer from "../components/direct-messages/DirectMessagesContainer";
 
 
 const Home = () => {
 
-  
+  // Query Data
+  const { data:currentDmChannel } = useQuery<DMChannel | null>({ queryKey: ['currentDmChannel'] });
 
   // Tabs: "Online", "All", "Pending", "Blocked", "Add Friend"
   const [currentTab, setCurrentTab] = useState<string>('Online');
 
   return (
-    <div className="w-full h-full flex flex-col gap-4 relative">
-      <FriendsHeaderBar currentTab={currentTab} setCurrentTab={setCurrentTab} />
+    <div className="w-full h-screen flex flex-col gap-4 relative">
+      {/* Header Bars */}
+      {!currentDmChannel && <FriendsHeaderBar currentTab={currentTab} setCurrentTab={setCurrentTab} />}
+      {currentDmChannel && <DirectMessageHeaderBar currentDmChannel={currentDmChannel} />}
+
       {/* Container */}
-      {currentTab !== 'Add Friend' && (
+      {!currentDmChannel && currentTab !== 'Add Friend' && (
         <div className="w-full p-4 flex flex-col relative gap-4">
           {/* Search Bar */}
           <div className="input-bar w-full h-9 flex items-center">
@@ -30,13 +36,20 @@ const Home = () => {
           {currentTab === 'Pending' && <Pending />}
         </div>
       )}
+      
+      {/* Dms */}
+      {currentDmChannel && <DirectMessagesContainer />}
 
-      {currentTab === 'Add Friend' && <AddFriend />}
+
+      {!currentDmChannel && currentTab === 'Add Friend' && <AddFriend />}
     </div>
   )
 }
 
 export default Home
+
+
+/// ------------------------------ FRIENDS ------------------------------
 
 const FriendsHeaderBar = ({currentTab, setCurrentTab}: {
   currentTab: string;
@@ -47,7 +60,7 @@ const FriendsHeaderBar = ({currentTab, setCurrentTab}: {
   const {data:friendRequest} = useQuery<Friend[]>({ queryKey: ['friendRequests'] });
 
   return (
-    <div className="h-12 w-full flex p-[.5rem] shadow-md border-b-tertiary border-b items-center ">
+    <div className="h-12 w-full flex p-[.5rem] shadow-md border-b-tertiary border-b items-center">
 
       <div className="flex gap-2 items-center pr-4 mr-4 border-r border-r-primaryLight text-accent">
         <IconFriends />
