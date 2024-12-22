@@ -14,7 +14,9 @@ const UserAvatar = ({avatar, status, backgroundColor}: {
           <div className="w-3 h-3 bg-green-400 rounded-full"></div>
         }
         {status === 'Offline' && 
-          <div className="w-3 h-3 bg-zinc-400 rounded-full"></div>
+          <div className="w-3 h-3 bg-zinc-400 rounded-full flex items-center justify-center">
+            <div className={`w-[.4rem] h-[.4rem] rounded-full ${backgroundColor ? 'bg-${backgroundColor}' : 'bg-primary'}`} />
+          </div>
         }
       </div>
     </div>

@@ -10,7 +10,7 @@ const ServerButton = ({server}: {server: Server}) => {
   const queryClient = useQueryClient();
 
   return (
-    <div className="relative px-4 bg-blue-500 flex items-center justify-center">
+    <div className="relative px-4  flex items-center justify-center">
       <div 
       onClick={() => {
         queryClient.setQueryData<Server>(['currentServer'], server);
