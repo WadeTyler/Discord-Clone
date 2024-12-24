@@ -8,43 +8,46 @@ import net.tylerwade.discord.repositories.ChannelRepository;
 import net.tylerwade.discord.repositories.MessageRepository;
 import net.tylerwade.discord.repositories.ServerJoinsRepository;
 import net.tylerwade.discord.repositories.ServerRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping(path="/api/servers")
+@RequestMapping(path = "/api/servers")
 public class ServerController {
 
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final ServerRepository serverRepository;
+    private final ServerJoinsRepository serverJoinsRepository;
+    private final ChannelRepository channelRepository;
+    private final MessageRepository messageRepository;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private ServerRepository serverRepository;
-
-    @Autowired
-    private ServerJoinsRepository serverJoinsRepository;
-
-    @Autowired
-    private ChannelRepository channelRepository;
-
-    @Autowired
-    private MessageRepository messageRepository;
-
-    @Autowired
-    private JwtUtil jwtUtil;
+    public ServerController(
+            SimpMessagingTemplate simpMessagingTemplate,
+            ServerRepository serverRepository,
+            ServerJoinsRepository serverJoinsRepository,
+            ChannelRepository channelRepository,
+            MessageRepository messageRepository,
+            JwtUtil jwtUtil) {
+        this.messagingTemplate = simpMessagingTemplate;
+        this.serverRepository = serverRepository;
+        this.serverJoinsRepository = serverJoinsRepository;
+        this.channelRepository = channelRepository;
+        this.messageRepository = messageRepository;
+        this.jwtUtil = jwtUtil;
+    }
 
     /// ------------------ SERVERS ------------------ ///
 
     // Create a server given the user's serverName and authToken
-    @PostMapping(path="/create")
-    public ResponseEntity createServer(@RequestBody Server serverRequest, @CookieValue("authToken") String authToken) {
+    @PostMapping(path = "/create")
+    public ResponseEntity<?> createServer(@RequestBody Server serverRequest, @CookieValue("authToken") String authToken) {
         try {
 
             // Check for Server Name
@@ -76,26 +79,29 @@ public class ServerController {
 
         } catch (Exception e) {
             System.out.println("Exception in createServer(): " + e.getMessage());
-            return new ResponseEntity(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     // Update the server given the serverID and updateRequest
-    @PutMapping(path="/{serverID}/update")
-    public ResponseEntity updateServer(@PathVariable String serverID, @RequestBody Server updateRequest, @CookieValue("authToken") String authToken) {
+    @PutMapping(path = "/{serverID}/update")
+    public ResponseEntity<?> updateServer(@PathVariable String serverID, @RequestBody Server updateRequest, @CookieValue("authToken") String authToken) {
         try {
             String userID = jwtUtil.getValue(authToken);
 
+            Optional<Server> serverOptional = serverRepository.findById(serverID);
+
             // Check server exists
-            if (!serverExists(serverID))
+            if (serverOptional.isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
+
+            Server server = serverOptional.get();
 
             // Check user is in server
             if (isNotInServer(userID, serverID))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.UNAUTHORIZED);
 
             // Check user is owner of server
-            Server server = serverRepository.findById(serverID).get();
             if (!server.getServerOwner().equals(userID)) {
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not the owner of this server."), HttpStatus.UNAUTHORIZED);
             }
@@ -119,19 +125,21 @@ public class ServerController {
     }
 
     // Delete a server given the serverID
-    @DeleteMapping(path="/{serverID}/delete")
-    public ResponseEntity deleteServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
+    @DeleteMapping(path = "/{serverID}/delete")
+    public ResponseEntity<?> deleteServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
         try {
             // Check for serverID
             if (serverID.isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("A serverID is required."), HttpStatus.BAD_REQUEST);
 
+            Optional<Server> serverOptional = serverRepository.findById(serverID);
+
             // Check if server exists
-            if (!serverRepository.existsById(serverID))
+            if (serverOptional.isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
 
             // Check if user is serverOwner
-            Server server = serverRepository.findById(serverID).get();
+            Server server = serverOptional.get();
 
             if (!server.getServerOwner().equals(jwtUtil.getValue(authToken)))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not the owner of this server."), HttpStatus.UNAUTHORIZED);
@@ -160,8 +168,8 @@ public class ServerController {
     }
 
     // Join a Server
-    @PostMapping(path="/{serverID}/join")
-    public ResponseEntity joinServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
+    @PostMapping(path = "/{serverID}/join")
+    public ResponseEntity<?> joinServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
         try {
             String userID = jwtUtil.getValue(authToken);
 
@@ -187,24 +195,28 @@ public class ServerController {
     }
 
     // Leave a Server
-    @DeleteMapping(path="/{serverID}/leave")
-    public ResponseEntity leaveServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
+    @DeleteMapping(path = "/{serverID}/leave")
+    public ResponseEntity<?> leaveServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
         try {
 
             String userID = jwtUtil.getValue(authToken);
 
+            Optional<Server> serverOptional = serverRepository.findById(serverID);
+
             // Check server exists
-            if (!serverRepository.existsById(serverID))
+            if (serverOptional.isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.BAD_REQUEST);
+
+            Server server = serverOptional.get();
 
             // Check in that server
             if (serverJoinsRepository.findByServerIDAndUserID(serverID, userID).isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.BAD_REQUEST);
 
             // Check if owner
-            if (serverRepository.findById(serverID).get().getServerOwner().equals(userID))
+            if (server.getServerOwner().equals(userID))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You cannot leave a server you own."), HttpStatus.BAD_REQUEST);
-            
+
             // Delete serverJoin
             serverJoinsRepository.deleteByServerIDAndUserID(serverID, userID);
 
@@ -216,8 +228,8 @@ public class ServerController {
     }
 
     // Kick a user from designated server
-    @DeleteMapping(path="/{serverID}/kick/{targetUserID}")
-    public ResponseEntity kickUser(@PathVariable String serverID, @PathVariable String targetUserID, @CookieValue("authToken") String authToken) {
+    @DeleteMapping(path = "/{serverID}/kick/{targetUserID}")
+    public ResponseEntity<?> kickUser(@PathVariable String serverID, @PathVariable String targetUserID, @CookieValue("authToken") String authToken) {
         try {
             String userID = jwtUtil.getValue(authToken);
 
@@ -225,17 +237,19 @@ public class ServerController {
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("serverID and targetUserID are required."), HttpStatus.BAD_REQUEST);
             }
 
+            Optional<Server> serverOptional = serverRepository.findById(serverID);
+
             // Check server exists
-            if (!serverExists(serverID))
+            if (serverOptional.isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.BAD_REQUEST);
+
+            Server server = serverOptional.get();
 
             // Check if user is in server
             if (isNotInServer(userID, serverID))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.UNAUTHORIZED);
 
             // Check if user is owner of that server
-            Server server = serverRepository.findById(serverID).get();
-
             if (!server.getServerOwner().equals(userID)) {
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not the owner of this server."), HttpStatus.UNAUTHORIZED);
             }
@@ -260,8 +274,8 @@ public class ServerController {
     }
 
     // Get joined Servers
-    @GetMapping(path="/joined")
-    public ResponseEntity getJoinedServers(@CookieValue("authToken") String authToken) {
+    @GetMapping(path = "/joined")
+    public ResponseEntity<?> getJoinedServers(@CookieValue("authToken") String authToken) {
         try {
             String userID = jwtUtil.getValue(authToken);
 
@@ -277,45 +291,48 @@ public class ServerController {
     /// ------------------ CHANNELS ------------------ ///
 
     // Create a channel in the specified servera
-    @PostMapping(path="/{serverID}/channels/create")
-    public ResponseEntity createChannel(@PathVariable String serverID, @RequestBody Channel channelRequest, @CookieValue("authToken") String authToken) {
+    @PostMapping(path = "/{serverID}/channels/create")
+    public ResponseEntity<?> createChannel(@PathVariable String serverID, @RequestBody Channel channelRequest, @CookieValue("authToken") String authToken) {
         try {
             String userID = jwtUtil.getValue(authToken);
 
+            Optional<Server> serverOptional = serverRepository.findById(serverID);
+
             // Check if server exists
-            if (!serverRepository.existsById(serverID))
+            if (serverOptional.isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
+
+            Server server = serverOptional.get();
 
             // Check if user is in server
             if (serverJoinsRepository.findByServerIDAndUserID(serverID, userID).isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are not in that server."), HttpStatus.UNAUTHORIZED);
 
             // Check if user owns the server
-            Server server = serverRepository.findById(serverID).get();
             if (!server.getServerOwner().equals(userID))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You do not have permissions to edit this server."), HttpStatus.UNAUTHORIZED);
 
             // Check for channel name
             if (channelRequest.getChannelName().isEmpty())
-                return new ResponseEntity(new ErrorMessage("A channel name is required."), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("A channel name is required."), HttpStatus.BAD_REQUEST);
 
             // Check channel name length
             if (channelRequest.getChannelName().length() > 50) {
-                return new ResponseEntity(new ErrorMessage("Channel name is too long. Max 50 characters."), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel name is too long. Max 50 characters."), HttpStatus.BAD_REQUEST);
             }
 
             // Validate Channel name
             if (channelRequest.getChannelName().charAt(0) == '-' || channelRequest.getChannelName().charAt(channelRequest.getChannelName().length() - 1) == '-') {
-                return new ResponseEntity(new ErrorMessage("Channel name cannot start or end with a hyphen."), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel name cannot start or end with a hyphen."), HttpStatus.BAD_REQUEST);
             }
 
             // Check for channel type
             if (channelRequest.getType().isEmpty())
-                return new ResponseEntity(new ErrorMessage("A channel type is required."), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("A channel type is required."), HttpStatus.BAD_REQUEST);
 
             // Check is valid
             if (!channelRequest.getType().equals("voice") && !channelRequest.getType().equals("text"))
-                return new ResponseEntity(new ErrorMessage("Invalid channel type. Must be 'text' or 'voice'"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Invalid channel type. Must be 'text' or 'voice'"), HttpStatus.BAD_REQUEST);
 
             List<Channel> channels = channelRepository.findByServerID(serverID);
 
@@ -349,28 +366,31 @@ public class ServerController {
     }
 
     // Delete a channel in the specified server
-    @DeleteMapping(path="/{serverID}/channels/{channelID}/delete")
-    public ResponseEntity deleteChannel(@PathVariable String serverID, @PathVariable String channelID, @CookieValue("authToken") String authToken) {
+    @DeleteMapping(path = "/{serverID}/channels/{channelID}/delete")
+    public ResponseEntity<?> deleteChannel(@PathVariable String serverID, @PathVariable String channelID, @CookieValue("authToken") String authToken) {
         try {
 
             String userID = jwtUtil.getValue(authToken);
 
+            Optional<Server> serverOptional = serverRepository.findById(serverID);
+            Optional<Channel> channelOptional = channelRepository.findById(channelID);
+
             // Check if server exists
-            if (!serverRepository.existsById(serverID))
+            if (serverOptional.isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
 
             // Check if channel exists
-            if (!channelRepository.existsById(channelID))
+            if (channelOptional.isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel not found."), HttpStatus.NOT_FOUND);
 
-            // Check if channel is inside that server
-            Channel channel = channelRepository.findById(channelID).get();
+            Server server = serverOptional.get();
+            Channel channel = channelOptional.get();
 
+            // Check if channel is inside that server
             if (!channel.getServerID().equals(serverID))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Channel not found in that server."), HttpStatus.NOT_FOUND);
 
             // Check if the user is the owner of the server
-            Server server = serverRepository.findById(serverID).get();
             if (!server.getServerOwner().equals(userID))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You do not have permissions to edit this server."), HttpStatus.UNAUTHORIZED);
 
@@ -406,10 +426,12 @@ public class ServerController {
     }
 
     // Update a channel in the specified server
-    @PutMapping(path="/{serverID}/channels/{channelID}/update")
-    public ResponseEntity updateChannel(@PathVariable String serverID, @PathVariable String channelID, @CookieValue("authToken") String authToken, @RequestBody Channel updateRequest) {
+    @PutMapping(path = "/{serverID}/channels/{channelID}/update")
+    public ResponseEntity<?> updateChannel(@PathVariable String serverID, @PathVariable String channelID, @CookieValue("authToken") String authToken, @RequestBody Channel updateRequest) {
         try {
             String userID = jwtUtil.getValue(authToken);
+
+            Optional<Server> serverOptional = serverRepository.findById(serverID);
 
             // Check for channel name
             if (updateRequest.getChannelName().isEmpty()) {
@@ -422,12 +444,12 @@ public class ServerController {
             }
 
             // Check if server exists
-            if (!serverExists(serverID)) {
+            if (serverOptional.isEmpty()) {
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
             }
 
             // Check if channel exists
-            Server server = serverRepository.findById(serverID).get();
+            Server server = serverOptional.get();
             Channel channel = channelRepository.findByServerIDAndChannelID(serverID, channelID);
 
             if (channel == null) {
@@ -457,8 +479,8 @@ public class ServerController {
     }
 
     // Get channels in a server
-    @GetMapping(path="/{serverID}/channels")
-    public ResponseEntity getChannelsInServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
+    @GetMapping(path = "/{serverID}/channels")
+    public ResponseEntity<?> getChannelsInServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
         try {
 
             String userID = jwtUtil.getValue(authToken);
@@ -485,8 +507,8 @@ public class ServerController {
     /// ------------------ USERS ------------------ ///
 
     // Get users in a server
-    @GetMapping(path="/{serverID}/users")
-    public ResponseEntity getUsersInServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
+    @GetMapping(path = "/{serverID}/users")
+    public ResponseEntity<?> getUsersInServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
         try {
 
             String userID = jwtUtil.getValue(authToken);

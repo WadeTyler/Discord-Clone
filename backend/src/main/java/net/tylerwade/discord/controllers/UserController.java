@@ -9,41 +9,42 @@ import net.tylerwade.discord.lib.util.PasswordUtil;
 import net.tylerwade.discord.models.SignUpRequest;
 import net.tylerwade.discord.models.User;
 import net.tylerwade.discord.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping(path="/api/auth")
+@RequestMapping(path = "/api/auth")
 public class UserController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    public UserController(UserRepository userRepository, JwtUtil jwtUtil) {
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+    }
+
 
     // Sign up and add to database
-    @PostMapping(path="/signup")
-    public @ResponseBody ResponseEntity signUp(@RequestBody SignUpRequest signupRequest, HttpServletResponse response) {
+    @PostMapping(path = "/signup")
+    public @ResponseBody ResponseEntity<?> signUp(@RequestBody SignUpRequest signupRequest, HttpServletResponse response) {
 
         // Check password length
         if (signupRequest.getPassword().length() < 6) {
-            return new ResponseEntity(new ErrorMessage("Password must be at least 6 characters long."), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Password must be at least 6 characters long."), HttpStatus.BAD_REQUEST);
         }
 
         // Check passwords match
         if (!signupRequest.getPassword().equals(signupRequest.getConfirmPassword())) {
-            return new ResponseEntity(new ErrorMessage("Passwords do not Match."), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Passwords do not Match."), HttpStatus.BAD_REQUEST);
         }
 
         // Check email already exists
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
-            return new ResponseEntity(new ErrorMessage("Email already taken."), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Email already taken."), HttpStatus.BAD_REQUEST);
         }
 
         // Generate userID
@@ -71,32 +72,31 @@ public class UserController {
     }
 
     // Sign the user in
-    @PostMapping(path="/login")
-    public @ResponseBody ResponseEntity login(@RequestBody User loginAttempt, HttpServletResponse response) {
+    @PostMapping(path = "/login")
+    public @ResponseBody ResponseEntity<?> login(@RequestBody User loginAttempt, HttpServletResponse response) {
         try {
             // Check for email and password
             if (loginAttempt.getEmail().isEmpty() || loginAttempt.getPassword().isEmpty())
-                return new ResponseEntity(new ErrorMessage("Email and Password are both required."), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Email and Password are both required."), HttpStatus.BAD_REQUEST);
 
             // Check email exists
-            if (!userRepository.existsByEmail(loginAttempt.getEmail()))
+            Optional<User> user = userRepository.findByEmail(loginAttempt.getEmail());
+
+            if (user.isEmpty())
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Email or Password Incorrect."), HttpStatus.BAD_REQUEST);
 
             // Check password matches
-            String hashedPassword = userRepository.findByEmail(loginAttempt.getEmail()).get().getPassword();
+            String hashedPassword = user.get().getPassword();
             if (!PasswordUtil.verifyPassword(loginAttempt.getPassword(), hashedPassword))
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("Email or Password Incorrect."), HttpStatus.BAD_REQUEST);
 
-
-            User user = userRepository.findByEmail(loginAttempt.getEmail()).get();
-
             // Add authToken
-            response.addCookie(getAuthCookie(user.getUserID()));
+            response.addCookie(getAuthCookie(user.get().getUserID()));
 
             // Remove Password
-            user.setPassword(null);
+            user.get().setPassword(null);
 
-            return new ResponseEntity<User>(user, HttpStatus.OK);
+            return new ResponseEntity<User>(user.get(), HttpStatus.OK);
         } catch (Exception e) {
             System.out.println("Exception in login: " + e.getMessage());
             return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -104,50 +104,51 @@ public class UserController {
     }
 
     // Get user data from authToken
-    @GetMapping(path="/me")
-    public @ResponseBody ResponseEntity getMe(@CookieValue("authToken") String authToken) {
-        if (authToken.isEmpty() || authToken.isBlank()) {
-            return new ResponseEntity(new ErrorMessage("No authToken provided. Please sign in."), HttpStatus.BAD_REQUEST);
+    @GetMapping(path = "/me")
+    public @ResponseBody ResponseEntity<?> getMe(@CookieValue("authToken") String authToken) {
+        if (authToken.isBlank()) {
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("No authToken provided. Please sign in."), HttpStatus.BAD_REQUEST);
         }
 
         String userID = jwtUtil.getValue(authToken);
 
         if (userID.isEmpty()) {
-            return new ResponseEntity(new ErrorMessage("Invalid userID"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Invalid userID"), HttpStatus.BAD_REQUEST);
         }
 
         Optional<User> user = userRepository.findById(userID);
 
         if (user.isEmpty()) {
-            return new ResponseEntity(new ErrorMessage("User not found."), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("User not found."), HttpStatus.NOT_FOUND);
         }
 
         user.get().setPassword(null);
 
-        return new ResponseEntity(user.get(), HttpStatus.OK);
+        return new ResponseEntity<User>(user.get(), HttpStatus.OK);
     }
 
     // Logout
-    @PostMapping(path="/logout")
-    public @ResponseBody ResponseEntity logout(@CookieValue("authToken") String authToken, HttpServletResponse response) {
+    @PostMapping(path = "/logout")
+    public @ResponseBody ResponseEntity<?> logout(@CookieValue("authToken") String authToken, HttpServletResponse response) {
         try {
             System.out.println(authToken);
 
-            if (authToken.isEmpty() || authToken.isBlank()) return new ResponseEntity(new ErrorMessage("User not signed in."), HttpStatus.BAD_REQUEST);
+            if (authToken.isBlank())
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("User not signed in."), HttpStatus.BAD_REQUEST);
 
             // Remove authToken cookie
             response.addCookie(getLogoutCookie());
 
-            return new ResponseEntity(new SuccessMessage("Logout Successful."), HttpStatus.OK);
+            return new ResponseEntity<SuccessMessage>(new SuccessMessage("Logout Successful."), HttpStatus.OK);
 
         } catch (Exception e) {
             System.out.println("Exception in logout: " + e.getMessage());
-            return new ResponseEntity(new ErrorMessage("Internal Server Error."), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error."), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     // Get all Users (REMOVE ONCE DONE)
-    @GetMapping(path="/all")
+    @GetMapping(path = "/all")
     public @ResponseBody Iterable<User> getAllUsers() {
 
         Iterable<User> users = userRepository.findAll();
@@ -167,7 +168,7 @@ public class UserController {
 
         while (userRepository.existsByTag(tag) || tag.length() != 4) {
             for (int i = 0; i < 4; i++) {
-                tag += (int)(Math.random() * 10);
+                tag += (int) (Math.random() * 10);
             }
         }
         return tag;
