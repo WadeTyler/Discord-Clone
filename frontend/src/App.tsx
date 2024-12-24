@@ -54,10 +54,10 @@ const App = () => {
             },
             credentials: "include",
           });
-          const data = await response.json();[]
-  
+          const data = await response.json();
+
           if (!response.ok) throw new Error(data.error);
-  
+
           return data;
         } catch (error) {
           toast.error((error as Error).message);
@@ -80,6 +80,8 @@ const App = () => {
 
   useEffect(() => {
     console.log("authUser: ", authUser);
+    console.log("Friends: ", friends);
+    console.log("Friend Requests: ", friendRequests);
 
     // Debugging
     console.log("Current Server: ", currentServer);
@@ -219,7 +221,7 @@ const App = () => {
   // Subscribe to all DM Channels
   useEffect(() => {
     if (client.connected && dmChannels) {
-      for (let dmChannel of dmChannels) {
+      for (const dmChannel of dmChannels) {
         client.subscribe(`/topic/dm/messages/new/${dmChannel.dmChannelID}`, (response) => {
           const data: DirectMessage = JSON.parse(response.body);
           console.log("New DM: ", data);
@@ -238,7 +240,7 @@ const App = () => {
     // Cleanup
     return () => {
       if (client.connected && dmChannels) {
-        for (let dmChannel of dmChannels) {
+        for (const dmChannel of dmChannels) {
           client.unsubscribe(`/topic/dm/messages/new/${dmChannel.dmChannelID}`);
         }
       }
@@ -417,21 +419,6 @@ const App = () => {
       }
     }
   }, [client, currentServer, channels, currentTextChannel, currentVoiceChannel, queryClient, authUser, usersInServer]);
-
-  // Get friends on load
-  useEffect(() => {
-    if (client.connected && authUser) {
-
-      
-    }
-
-    // Cleanup
-    return () => {
-      if (client.connected && authUser) {
-        client.unsubscribe(`/topic/friends/${authUser.userID}`);
-      }
-    }
-  }, [authUser, client]);
 
   /* --------------------------------------------------------------------------------------- */
 
