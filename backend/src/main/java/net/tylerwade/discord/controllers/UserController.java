@@ -147,19 +147,6 @@ public class UserController {
         }
     }
 
-    // Get all Users (REMOVE ONCE DONE)
-    @GetMapping(path = "/all")
-    public @ResponseBody Iterable<User> getAllUsers() {
-
-        Iterable<User> users = userRepository.findAll();
-        for (User user : users) {
-            user.setPassword(null);
-        }
-
-        return users;
-    }
-
-
     // ---------------- UTIL
 
     // Generate a unique 4 digit tag
