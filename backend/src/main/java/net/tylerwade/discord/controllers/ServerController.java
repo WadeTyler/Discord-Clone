@@ -2,16 +2,17 @@ package net.tylerwade.discord.controllers;
 
 import net.tylerwade.discord.lib.ErrorMessage;
 import net.tylerwade.discord.lib.SuccessMessage;
+import net.tylerwade.discord.lib.util.DateTimeUtil;
 import net.tylerwade.discord.lib.util.JwtUtil;
 import net.tylerwade.discord.models.*;
-import net.tylerwade.discord.repositories.ChannelRepository;
-import net.tylerwade.discord.repositories.MessageRepository;
-import net.tylerwade.discord.repositories.ServerJoinsRepository;
-import net.tylerwade.discord.repositories.ServerRepository;
+import net.tylerwade.discord.repositories.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
+
+import javax.swing.text.html.Option;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class ServerController {
     private final ChannelRepository channelRepository;
     private final MessageRepository messageRepository;
     private final JwtUtil jwtUtil;
+    private final InviteRepository inviteRepository;
 
     public ServerController(
             SimpMessagingTemplate simpMessagingTemplate,
@@ -34,13 +36,15 @@ public class ServerController {
             ServerJoinsRepository serverJoinsRepository,
             ChannelRepository channelRepository,
             MessageRepository messageRepository,
-            JwtUtil jwtUtil) {
+            JwtUtil jwtUtil,
+            InviteRepository inviteRepository) {
         this.messagingTemplate = simpMessagingTemplate;
         this.serverRepository = serverRepository;
         this.serverJoinsRepository = serverJoinsRepository;
         this.channelRepository = channelRepository;
         this.messageRepository = messageRepository;
         this.jwtUtil = jwtUtil;
+        this.inviteRepository = inviteRepository;
     }
 
     /// ------------------ SERVERS ------------------ ///
@@ -168,31 +172,55 @@ public class ServerController {
     }
 
     // Join a Server
-    @PostMapping(path = "/{serverID}/join")
-    public ResponseEntity<?> joinServer(@PathVariable String serverID, @CookieValue("authToken") String authToken) {
+    @PostMapping(path = "/join/{inviteID}")
+    public ResponseEntity<?> joinServer(@PathVariable String inviteID, @CookieValue("authToken") String authToken) {
         try {
             String userID = jwtUtil.getValue(authToken);
 
-            // Check server exists
-            if (!serverRepository.existsById(serverID))
-                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Server not found."), HttpStatus.NOT_FOUND);
+            // Check for inviteID
+            if (inviteID.isEmpty()) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("inviteID is required."), HttpStatus.BAD_REQUEST);
+            }
 
-            // Check if already in server
-            List<ServerJoin> sj = serverJoinsRepository.findByServerIDAndUserID(serverID, userID);
-            if (!sj.isEmpty())
-                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You're already in that server."), HttpStatus.BAD_REQUEST);
+            // Check if invite exists
+            Optional<Invite> inviteOptional = inviteRepository.findById(inviteID);
+            if (inviteOptional.isEmpty())
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Invite is invalid or has expired."), HttpStatus.BAD_REQUEST);
+
+            Invite invite = inviteOptional.get();
+            Date currentDate = new Date();
+            Date expiresAt = DateTimeUtil.convertStringToDate(invite.getExpires_at());
+
+            // Check if server exists
+            Optional<Server> serverOptional = serverRepository.findById(invite.getServerID());
+            if (serverOptional.isEmpty())
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Invite is invalid or has expired."), HttpStatus.BAD_REQUEST);
+
+            Server server = serverOptional.get();
+
+            // Check if expired
+            if (expiresAt.before(currentDate)) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("Invite is invalid or has expired."), HttpStatus.BAD_REQUEST);
+            }
+
+            // Check if user is in server
+            if (isNotInServer(userID, invite.getServerID())) {
+                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are already in that server."), HttpStatus.BAD_REQUEST);
+            }
 
             // Join server
-            ServerJoin serverJoin = new ServerJoin(serverID, userID);
+            ServerJoin serverJoin = new ServerJoin(invite.getServerID(), userID);
             serverJoinsRepository.save(serverJoin);
 
-            return new ResponseEntity<ServerJoinPK>(serverJoin.getId(), HttpStatus.OK);
+            // Return the server
+            return new ResponseEntity<Server>(server, HttpStatus.OK);
 
         } catch (Exception e) {
             System.out.println("Exception in joinServer(): " + e.getMessage());
             return new ResponseEntity<ErrorMessage>(new ErrorMessage("Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     // Leave a Server
     @DeleteMapping(path = "/{serverID}/leave")

@@ -60,3 +60,10 @@ export type DMChannel = {
   channelName: string;
   lastModified: string;
 }
+
+export type Invite = {
+  id: string;
+  serverID: string;
+  creatorID: string;
+  expires_at: string;
+}
