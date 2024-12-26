@@ -1,11 +1,12 @@
 import { IconPhoneFilled, IconVideoFilled, IconUsersPlus } from "@tabler/icons-react";
 import { DMChannel } from "../../types/types";
+import {useQuery} from "@tanstack/react-query";
 
 
-const DirectMessageHeaderBar = ({currentDmChannel}: {
-  currentDmChannel: DMChannel | null;
-}) => {
+const DirectMessageHeaderBar = () => {
 
+    // Query Data
+    const { data:currentDmChannel } = useQuery<DMChannel | null>({ queryKey: ['currentDmChannel'] });
 
   return (
     <div className="h-12 w-full flex p-[.5rem] shadow-md border-b-tertiary border-b items-center justify-between">

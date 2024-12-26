@@ -6,6 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DMJunctionsRepository extends CrudRepository<DirectMessageJunction, Long> {
@@ -17,5 +18,5 @@ public interface DMJunctionsRepository extends CrudRepository<DirectMessageJunct
     public List<DirectMessageJunction> findByDMChannelID(String dmChannelID);
 
     @Query("SELECT j FROM DirectMessageJunction j WHERE j.dmChannelID = ?1 AND j.userID = ?2")
-    public List<DirectMessageJunction> findByDMChannelIDAndUserID(String dmChannelID, String userID);
+    public Optional<DirectMessageJunction> findByDMChannelIDAndUserID(String dmChannelID, String userID);
 }

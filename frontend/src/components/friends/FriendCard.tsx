@@ -9,6 +9,25 @@ const FriendCard = ({friend}: {
   friend: Friend;
 }) => {
 
+  const { data:authUser } = useQuery<User>({ queryKey: ['authUser'] });
+
+
+  // Websocket
+  const client = useWebSocket();
+
+  const openDMChannel = () => {
+
+    client.publish({
+      destination: "/app/dm/channels/create",
+      body: JSON.stringify({
+        user1: authUser?.userID,
+        user2: friend.userID
+      })
+    });
+
+  }
+
+  // States
   const [viewingOptions, setViewingOptions] = useState<boolean>(false);
   const [removingFriend, setRemovingFriend] = useState<boolean>(false);
 
@@ -25,7 +44,9 @@ const FriendCard = ({friend}: {
 
       {/* Right Side */}
       <section className="flex gap-2 relative">
-        <div className="w-10 h-10 flex items-center bg-secondary justify-center rounded-full hover:text-white hover:bg-tertiary">
+        <div
+            onClick={openDMChannel}
+            className="w-10 h-10 flex items-center bg-secondary justify-center rounded-full hover:text-white hover:bg-tertiary">
           <IconMessageCircleFilled />
         </div>
         <div 

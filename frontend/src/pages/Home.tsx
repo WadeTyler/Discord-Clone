@@ -21,7 +21,7 @@ const Home = () => {
     <div className="w-full h-screen flex flex-col gap-4 relative">
       {/* Header Bars */}
       {!currentDmChannel && <FriendsHeaderBar currentTab={currentTab} setCurrentTab={setCurrentTab} />}
-      {currentDmChannel && <DirectMessageHeaderBar currentDmChannel={currentDmChannel} />}
+      {currentDmChannel && <DirectMessageHeaderBar />}
 
       {/* Container */}
       {!currentDmChannel && currentTab !== 'Add Friend' && (

@@ -198,6 +198,23 @@ const App = () => {
       });
     };
     getDMChannels();
+
+    // Receive command to set current dm channel to the one provided.
+    client.subscribe(`/topic/dm/channels/set/${authUser?.userID}`, (response) => {
+      const data: DMChannel = JSON.parse(response.body);
+      console.log("Setting DM Channel: ", data);
+
+      queryClient.setQueryData<DMChannel | null>(['currentDmChannel'], data);
+    });
+
+    // Receive new DM Channel
+    client.subscribe(`/topic/dm/channels/new/${authUser?.userID}`, (response) => {
+      const data = JSON.parse(response.body);
+        console.log("New DM Channel: ", data);
+        // Just refresh the list of dm channels
+        queryClient.invalidateQueries({ queryKey: ['dmChannels'] });
+    });
+
   };
 
   // On Disconnecting from WebSocket Broker
