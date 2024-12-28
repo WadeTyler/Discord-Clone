@@ -9,10 +9,6 @@ import DeleteServer from "./DeleteServer";
 
 const ServerSettings = ({setShowServerSettings}: {setShowServerSettings: React.Dispatch<SetStateAction<boolean>>;}) => {
 
-  // Query Data
-  const {data:currentServer} = useQuery<Server | null>({ queryKey: ['currentServer'] });
-  
-
   // States
   const [currentTab, setCurrentTab] = useState<string>('overview');
 
@@ -31,7 +27,7 @@ const ServerSettings = ({setShowServerSettings}: {setShowServerSettings: React.D
       {/* Body Container */}
       <div className="w-full h-full flex justify-center p-8 py-12 pr-16 relative">
         {currentTab === 'overview' && <Overview />}
-        {currentTab === 'delete-server' && <DeleteServer currentServer={currentServer as Server} setCurrentTab={setCurrentTab} setShowServerSettings={setShowServerSettings} />}
+        {currentTab === 'delete-server' && <DeleteServer setCurrentTab={setCurrentTab} setShowServerSettings={setShowServerSettings} />}
       </div>
     </motion.div>
   )
