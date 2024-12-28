@@ -1,1 +1,26 @@
+# Environment variables file
 *.env
+
+# IntelliJ IDEA files
+.idea/
+.idea/*
+*.iws
+*.iml
+*.ipr
+
+# NetBeans files
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+# Exclude build output directories
+out/
+
+# Exclude VS Code files
+.vscode/
+
+# Ignore Maven build output
+/target/

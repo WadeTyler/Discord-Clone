@@ -18,7 +18,7 @@ public class DiscordApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(DiscordApplication.class, args);
-
+		System.out.println("Backend Server is now running.");
 	}
 
 }
