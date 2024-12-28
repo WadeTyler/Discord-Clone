@@ -25,6 +25,9 @@ const App = () => {
       try {
         const response = await fetch(`${API_URL}/auth/me`, {
           method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
           credentials: "include",
         });
         const data = await response.json();
