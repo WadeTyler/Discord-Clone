@@ -24,7 +24,6 @@ export type Channel = {
   type: 'text' | 'voice';
 }
 
-
 export type Message = {
   messageID: number;
   senderID: string;
@@ -66,4 +65,12 @@ export type Invite = {
   serverID: string;
   creatorID: string;
   expires_at: string;
+}
+
+export type InviteInfo = {
+  serverID: string;
+  serverName: string;
+  serverIcon: string;
+  serverSize: number;
+  expired: boolean;
 }

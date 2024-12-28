@@ -28,4 +28,7 @@ public interface ServerJoinsRepository extends CrudRepository<ServerJoin, Server
 
     @Query(value = "SELECT new net.tylerwade.discord.models.UserDTO(u.userID, u.username, u.tag, u.avatar, u.status) FROM User u JOIN ServerJoin sj ON u.userID = sj.id.userID WHERE sj.id.serverID = ?1")
     List<UserDTO> findUsersInServer(String serverID);
+
+    @Query(value = "SELECT * FROM server_joins WHERE serverID = ?1", nativeQuery = true)
+    List<ServerJoin> findByServerID(String serverID);
 }

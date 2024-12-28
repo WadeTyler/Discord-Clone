@@ -18,9 +18,9 @@ public class DateTimeUtil {
         return timestamp;
     }
 
-    public static Date convertStringToDate(String expiresAt) {
+    public static Date convertStringToDate(String timeStr) {
         try {
-            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(expiresAt);
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(timeStr);
         } catch (Exception e) {
             return null;
         }

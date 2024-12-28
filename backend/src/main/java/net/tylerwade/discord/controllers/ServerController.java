@@ -204,7 +204,7 @@ public class ServerController {
             }
 
             // Check if user is in server
-            if (isNotInServer(userID, invite.getServerID())) {
+            if (isInServer(userID, invite.getServerID())) {
                 return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are already in that server."), HttpStatus.BAD_REQUEST);
             }
 
@@ -568,6 +568,15 @@ public class ServerController {
     private boolean isNotInServer(String userID, String serverID) {
         ServerJoinPK sjpk = new ServerJoinPK(serverID, userID);
         return !serverJoinsRepository.existsById(sjpk);
+    }
+
+    private boolean isInServer(String userID, String serverID) {
+        List<ServerJoin> result = serverJoinsRepository.findByServerIDAndUserID(serverID, userID);
+        if (result == null || result.isEmpty()) {
+            return false;
+        }
+
+        return true;
     }
 
     // Check if server exists

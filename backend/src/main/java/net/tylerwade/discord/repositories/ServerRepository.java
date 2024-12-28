@@ -12,4 +12,5 @@ public interface ServerRepository extends CrudRepository<Server, String> {
 
     @Query(value = "SELECT servers.* FROM servers JOIN server_joins ON servers.serverID = server_joins.serverID WHERE server_joins.userID = ?1", nativeQuery = true)
     List<Server> findAllJoinedServers(String userID);
+
 }

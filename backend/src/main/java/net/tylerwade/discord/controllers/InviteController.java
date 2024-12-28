@@ -1,21 +1,23 @@
 package net.tylerwade.discord.controllers;
 
 import net.tylerwade.discord.lib.ErrorMessage;
+import net.tylerwade.discord.lib.Responses;
 import net.tylerwade.discord.lib.util.DateTimeUtil;
 import net.tylerwade.discord.lib.util.JwtUtil;
 import net.tylerwade.discord.models.Invite;
 import net.tylerwade.discord.models.Server;
 import net.tylerwade.discord.repositories.InviteRepository;
+import net.tylerwade.discord.repositories.ServerJoinsRepository;
 import net.tylerwade.discord.repositories.ServerRepository;
 import net.tylerwade.discord.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
+import java.util.Optional;
 
 @Controller
 @RequestMapping(path = "/api/invites")
@@ -31,10 +33,13 @@ public class InviteController {
     private ServerRepository serverRepository;
 
     @Autowired
+    private ServerJoinsRepository serverJoinsRepository;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
     @PostMapping(path = "/create")
-    private ResponseEntity<?> createInvite(@RequestBody Invite request, @CookieValue("authToken") String authToken) {
+    public ResponseEntity<?> createInvite(@RequestBody Invite request, @CookieValue("authToken") String authToken) {
         try {
 
             String userID = jwtUtil.getValue(authToken);
@@ -71,6 +76,54 @@ public class InviteController {
         }
     }
 
+    @GetMapping(path = "/{inviteID}/info")
+    public ResponseEntity<?> getInviteInfo(@PathVariable String inviteID) {
+        try {
+
+            String invalidOrExpired = "InviteID is invalid or has expired.";
+
+            // Check for invite ID
+            if (inviteID.isEmpty())
+                return Responses.badRequest("InviteID is required.");
+
+            Optional<Invite> inviteOptional = inviteRepository.findById(inviteID);
+
+            // Check if exists
+            if (inviteOptional.isEmpty())
+                return Responses.badRequest(invalidOrExpired);
+
+            Invite invite = inviteOptional.get();
+
+            Date currentDate = new Date();
+            Date expiresAt = DateTimeUtil.convertStringToDate(invite.getExpires_at());
+
+            // Check if expired
+            boolean expired = expiresAt.before(currentDate);
+
+            Optional<Server> serverOptional = serverRepository.findById(invite.getServerID());
+
+            // Check if server exists
+            if (serverOptional.isEmpty())
+                return Responses.notFound("Server not found.");
+
+            // Create Server Info
+            Server server = serverOptional.get();
+
+            int serverSize = serverJoinsRepository.findByServerID(server.getServerID()).size();
+
+            InviteInfo inviteInfo = new InviteInfo(server.getServerID(), server.getServerName(), server.getServerIcon(), serverSize, expired);
+
+            // Return Invite Info
+            return new ResponseEntity<InviteInfo>(inviteInfo, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println("Exception in getInviteInfo(): " + e.getMessage());
+            return Responses.internalServerError();
+        }
+    }
+
+    /// --------------- UTIL --------------- ///
+
     private String generateInviteID() {
         int randomSize = (int) (Math.random() * 10) + 1;
 
@@ -85,5 +138,65 @@ public class InviteController {
 
         return inviteID;
 
+    }
+}
+
+/// --------------- UTIL CLASSES --------------- ///
+class InviteInfo {
+    private String serverID;
+    private String serverName;
+    private String serverIcon;
+    private int serverSize;
+    private boolean expired;
+
+    public InviteInfo() {
+    }
+
+    public InviteInfo(String serverID, String serverName, String serverIcon, int serverSize, boolean expired) {
+        this.serverID = serverID;
+        this.serverName = serverName;
+        this.serverIcon = serverIcon;
+        this.serverSize = serverSize;
+        this.expired = expired;
+    }
+
+    public String getServerID() {
+        return serverID;
+    }
+
+    public void setServerID(String serverID) {
+        this.serverID = serverID;
+    }
+
+    public String getServerName() {
+        return serverName;
+    }
+
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
+    }
+
+    public String getServerIcon() {
+        return serverIcon;
+    }
+
+    public void setServerIcon(String serverIcon) {
+        this.serverIcon = serverIcon;
+    }
+
+    public int getServerSize() {
+        return serverSize;
+    }
+
+    public void setServerSize(int serverSize) {
+        this.serverSize = serverSize;
+    }
+
+    public boolean isExpired() {
+        return expired;
+    }
+
+    public void setExpired(boolean expired) {
+        this.expired = expired;
     }
 }
