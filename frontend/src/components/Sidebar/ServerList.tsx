@@ -6,7 +6,7 @@ import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {Channel, Friend, Server} from '../../types/types';
 import {ServerIconSkeleton} from '../skeletons/Skeletons';
 
-const ServerList = ({setCreatingServer}: { setCreatingServer: React.Dispatch<SetStateAction<boolean>>; }) => {
+const ServerList = ({setAddingServer}: { setAddingServer: React.Dispatch<SetStateAction<boolean>>; }) => {
 
   // Query Data
   const queryClient = useQueryClient();
@@ -75,7 +75,7 @@ const ServerList = ({setCreatingServer}: { setCreatingServer: React.Dispatch<Set
         <div
           onMouseEnter={() => setNewServerHover(true)}
           onMouseLeave={() => setNewServerHover(false)}
-          onClick={() => setCreatingServer(true)}
+          onClick={() => setAddingServer(true)}
           className="w-12 h-12 flex items-center justify-center relative cursor-pointer rounded-[50%] hover:rounded-[30%] duration-300 hover:bg-green-500 hover:text-white bg-primary p-2 text-green-500">
           <IconPlus/>
           {hoveringNewServer && <NewServerLabel/>}

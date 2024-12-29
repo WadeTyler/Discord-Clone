@@ -38,7 +38,9 @@ const Sidebar = () => {
 
   // States
   const [hoveringUserInfo, setHoveringUserInfo] = useState(false);
+  const [addingServer, setAddingServer] = useState<boolean>(false);
   const [creatingServer, setCreatingServer] = useState<boolean>(false);
+  const [joiningServer, setJoiningServer] = useState<boolean>(false);
   const [creatingChannel, setCreatingChannel] = useState<boolean>(false);
   const [creatingInvite, setCreatingInvite] = useState<boolean>(false);
   const [newChannelType, setNewChannelType] = useState<string>('text');
@@ -56,8 +58,15 @@ const Sidebar = () => {
     <div className="min-w-72 w-72 h-screen bg-secondary flex relative">
 
 
+      {/* Adding Server */}
+      {addingServer && <AddingServer setAddingServer={setAddingServer} setCreatingServer={setCreatingServer}
+                                     setJoiningServer={setJoiningServer}/>}
+
       {/* Creating Server */}
       {creatingServer && <CreatingServer setCreatingServer={setCreatingServer}/>}
+
+      {/* Joining Server */}
+      {joiningServer && <JoiningServer setJoiningServer={setJoiningServer}/>}
 
       {/* Creating Channel */}
       {creatingChannel && <CreatingChannel setCreatingChannel={setCreatingChannel} newChannelType={newChannelType}
@@ -67,7 +76,7 @@ const Sidebar = () => {
       {creatingInvite && <CreatingInvite setCreatingInvite={setCreatingInvite}/>}
 
       {/* Server List */}
-      <ServerList setCreatingServer={setCreatingServer}/>
+      <ServerList setAddingServer={setAddingServer}/>
 
       {/* Show the ServerBar for the selected server */}
       {currentServer &&
@@ -406,6 +415,115 @@ const ServerOptionsDropdown = ({setShowServerSettings, setShowServerOptionsDropd
   )
 }
 
+// Panel for adding server
+const AddingServer = ({setAddingServer, setCreatingServer, setJoiningServer}: {
+  setAddingServer: React.Dispatch<SetStateAction<boolean>>;
+  setCreatingServer: React.Dispatch<SetStateAction<boolean>>;
+  setJoiningServer: React.Dispatch<SetStateAction<boolean>>;
+}) => {
+
+
+  return (
+    <div className="fixed top-0 left-0 w-full h-screen bg-[rgba(0,0,0,.8)] flex items-center justify-center z-40">
+
+      <div className="bg-primary rounded flex flex-col p-4 z-50 relative gap-4 w-64">
+        <CloseButton setState={setAddingServer} cn="top-4 right-4 absolute"/>
+
+        <p className="text-accent font-semibold">Add a Server</p>
+        <button className="submit-btn w-full" onClick={() => {
+          setCreatingServer(true);
+          setAddingServer(false)
+        }}>Create Server
+        </button>
+        <button className="submit-btn !bg-green-700 hover:!bg-green-800 w-full" onClick={() => {
+          setJoiningServer(true);
+          setAddingServer(false)
+        }}>Join Server
+        </button>
+      </div>
+
+    </div>
+  )
+}
+
+// Panel for joining server
+const JoiningServer = ({setJoiningServer}: {
+  setJoiningServer: React.Dispatch<SetStateAction<boolean>>;
+}) => {
+
+  const API_URL = import.meta.env.VITE_API_URL;
+  const queryClient = useQueryClient();
+  // States
+  const [userInput, setUserInput] = useState<string>('');
+
+  // Mutation to join server
+  const {mutate: joinServer, isPending: loadingJoiningServer} = useMutation({
+    mutationFn: async () => {
+      try {
+
+        if (!userInput) throw new Error("Invite Code is required.");
+
+        const inviteID = userInput.split("/").pop();
+
+        const response = await fetch(`${API_URL}/servers/join/${inviteID}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error);
+
+        return data;
+      } catch (e) {
+        throw new Error(e.message);
+      }
+    },
+    onSuccess: (data: Server) => {
+      queryClient.invalidateQueries({queryKey: ['joinedServers']});
+      queryClient.setQueryData<Server | null>(['currentServer'], data);
+      setJoiningServer(false);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Something went wrong");
+    }
+  });
+
+  return (
+    <div className="w-full h-screen fixed flex items-center justify-center bg-[rgba(0,0,0,.8)] z-40">
+      <div className="bg-primary flex flex-col rounded relative z-50">
+        <CloseButton setState={setJoiningServer} cn="absolute top-4 right-4"/>
+        <div className="p-4 flex flex-col gap-4 ">
+          <p className="text-accent font-semibold text-lg">Join Server</p>
+          <p className="input-label">ENTER AN INVITE CODE OR INVITE LINK</p>
+          <p className="text-xs text-accentDark">Ex: 'suwjcenfzsgktjpdt'</p>
+          <p className="text-xs text-accentDark">Ex: 'https://discord.tylerwade.net/invite/suwjcenfzsgktjpdt'</p>
+          <input type="text" className="input-bar" placeholder={"Invite Code"} value={userInput}
+                 onChange={(e) => setUserInput(e.target.value)}/>
+        </div>
+
+        <div className="p-4 flex items-center justify-center bg-secondary rounded-b">
+          {!loadingJoiningServer &&
+              <button
+                  onClick={() => joinServer()}
+                  className="submit-btn-green w-full"
+              >
+                  Join Server
+              </button>
+          }
+          {loadingJoiningServer &&
+            <LoadingSpinnerMD />
+          }
+        </div>
+
+
+      </div>
+    </div>
+  )
+}
 
 // Panel for creating server
 const CreatingServer = ({setCreatingServer}: {

@@ -205,7 +205,8 @@ public class ServerController {
 
             // Check if user is in server
             if (isInServer(userID, invite.getServerID())) {
-                return new ResponseEntity<ErrorMessage>(new ErrorMessage("You are already in that server."), HttpStatus.BAD_REQUEST);
+                // Return the server if so
+                return new ResponseEntity<Server>(server, HttpStatus.OK);
             }
 
             // Join server

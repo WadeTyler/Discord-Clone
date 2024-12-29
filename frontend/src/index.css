@@ -19,7 +19,11 @@ body {
 }
 
 .submit-btn {
-  @apply bg-accentBlue text-white p-2 rounded hover:bg-accentBlueDark cursor-pointer duration-300;
+  @apply bg-accentBlue text-white p-2 rounded hover:bg-accentBlueDark cursor-pointer duration-300 text-center;
+}
+
+.submit-btn-green {
+  @apply bg-green-700 text-white p-2 rounded hover:bg-green-800 cursor-pointer duration-300 text-center;
 }
 
 .delete-btn {
