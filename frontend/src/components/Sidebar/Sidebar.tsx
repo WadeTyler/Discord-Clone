@@ -479,7 +479,7 @@ const JoiningServer = ({setJoiningServer}: {
 
         return data;
       } catch (e) {
-        throw new Error(e.message);
+        throw new Error((e as Error).message);
       }
     },
     onSuccess: (data: Server) => {
