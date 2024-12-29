@@ -129,7 +129,7 @@ password: ****
 +------------+--------------+------+-----+---------+-------+
 | Field      | Type         | Null | Key | Default | Extra |
 +------------+--------------+------+-----+---------+-------+
-| id         | varchar(10)  | NO   | PRI | NULL    |       |
+| id         | varchar(30)  | NO   | PRI | NULL    |       |
 | expires_at | timestamp    | NO   |     | NULL    |       |
 | serverID   | varchar(512) | NO   | MUL | NULL    |       |
 | creatorID  | varchar(512) | NO   | MUL | NULL    |       |

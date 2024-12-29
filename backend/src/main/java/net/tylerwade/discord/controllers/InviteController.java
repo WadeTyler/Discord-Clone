@@ -125,11 +125,11 @@ public class InviteController {
     /// --------------- UTIL --------------- ///
 
     private String generateInviteID() {
-        int randomSize = (int) (Math.random() * 10) + 1;
+        int randomSize = (int) (Math.random() * 25) + 5;
 
         String inviteID = "";
         for (int i = 0; i < randomSize; i++) {
-            inviteID += (int) (Math.random() * 10);
+            inviteID += (char) ((int) (Math.random() * 26) + 97);
         }
 
         if (inviteRepository.existsById(inviteID)) {
