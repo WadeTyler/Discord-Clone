@@ -108,6 +108,7 @@ password: ****
 | id          | bigint       | NO   | PRI | NULL    | auto_increment |
 | dmChannelID | varchar(512) | NO   | MUL | NULL    |                |
 | userID      | varchar(512) | NO   | MUL | NULL    |                |
+| show        | tinyint(1)   | NO   |     | 1       |                |
 +-------------+--------------+------+-----+---------+----------------+
 ```
 
@@ -133,5 +134,6 @@ password: ****
 | expires_at | timestamp    | NO   |     | NULL    |       |
 | serverID   | varchar(512) | NO   | MUL | NULL    |       |
 | creatorID  | varchar(512) | NO   | MUL | NULL    |       |
+| show       | tinyint(1)   | NO   |     | 0       |       |
 +------------+--------------+------+-----+---------+-------+
 ```

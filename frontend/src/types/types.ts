@@ -58,6 +58,7 @@ export type DMChannel = {
   createdAt: string;
   channelName: string;
   lastModified: string;
+  show: boolean;
 }
 
 export type Invite = {

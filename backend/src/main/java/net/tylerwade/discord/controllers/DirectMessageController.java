@@ -17,6 +17,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import javax.swing.text.html.Option;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -72,8 +74,19 @@ public class DirectMessageController {
                 // Set the channel avatar
                 existingDMChannel.setAvatar(getChannelAvatar(existingDMChannel, request.getUser1()));
 
+
+                // Update the user's junction to 'show'
+                DirectMessageJunction junction = dmJunctionsRepository.findByDMChannelIDAndUserID(existingDMChannel.getDmChannelID(), request.getUser1()).get();
+
+                junction.setShow(true);
+                dmJunctionsRepository.save(junction);
+
+                FrontendDMChannel existingFrontendDMChannel = new FrontendDMChannel(existingDMChannel, true);
+
+                messagingTemplate.convertAndSend("/topic/dm/channels/unhide/" + request.getUser1(), existingDMChannel.getDmChannelID());
+
                 // Send the channel to the user
-                messagingTemplate.convertAndSend("/topic/dm/channels/set/" + request.getUser1(), existingDMChannel);
+                messagingTemplate.convertAndSend("/topic/dm/channels/set/" + request.getUser1(), existingFrontendDMChannel);
                 return;
             }
 
@@ -87,8 +100,8 @@ public class DirectMessageController {
             dmChannelsRepository.save(dmChannel);
 
             // Create the DM Junctions
-            DirectMessageJunction junction1 = new DirectMessageJunction(dmChannelID, request.getUser1());
-            DirectMessageJunction junction2 = new DirectMessageJunction(dmChannelID, request.getUser2());
+            DirectMessageJunction junction1 = new DirectMessageJunction(dmChannelID, request.getUser1(), true);
+            DirectMessageJunction junction2 = new DirectMessageJunction(dmChannelID, request.getUser2(), true);
             dmJunctionsRepository.save(junction1);
             dmJunctionsRepository.save(junction2);
 
@@ -122,21 +135,77 @@ public class DirectMessageController {
             List<DirectMessageChannel> channels = dmChannelsRepository.findAllByUserID(userID);
 
             // Dynamically determine the channel name based on the other users in the channel
+            // Dynamically get the channel avatar if there is only 2 users in the channel
             for (DirectMessageChannel channel : channels) {
                 // Get all junctions in the channel
                 channel.setChannelName(getDMChannelName(channel, userID));
-            }
-
-            // Dynamically get the channel avatar if there is only 2 users in the channel
-            for (DirectMessageChannel channel : channels) {
                 channel.setAvatar(getChannelAvatar(channel, userID));
             }
 
+            ArrayList<FrontendDMChannel> frontendDMChannels = new ArrayList<>();
+
+            for (DirectMessageChannel channel : channels) {
+
+                Optional<DirectMessageJunction> junctionOptional = dmJunctionsRepository.findByDMChannelIDAndUserID(channel.getDmChannelID(), userID);
+
+                if (junctionOptional.isPresent()) {
+                    DirectMessageJunction junction = junctionOptional.get();
+
+                    FrontendDMChannel frontendDMChannel = new FrontendDMChannel(channel.getDmChannelID(), channel.getAvatar(), channel.getCreatedAt(), channel.getChannelName(), channel.getLastModified(), junction.isShow());
+                    frontendDMChannels.add(frontendDMChannel);
+                }
+
+
+
+            }
+
             // Send the channels to the user
-            messagingTemplate.convertAndSend("/topic/dm/channels/" + userID, channels);
+            messagingTemplate.convertAndSend("/topic/dm/channels/" + userID, frontendDMChannels);
         } catch (Exception e) {
             System.out.println("Exception while getting DM channels: " + e.getMessage());
             messagingTemplate.convertAndSend("/topic/errors/" + userID, e.getMessage() != null ? e.getMessage() : "Error while getting DM channels");
+        }
+    }
+
+    // Hide a DM channel
+    @MessageMapping("/dm/channels/hide")
+    public void hideDMChannel(HideDMChannelRequest request) {
+        try {
+            // Check for userID
+            if (request.getUserID().isEmpty()) {
+                messagingTemplate.convertAndSend("/topic/errors/" + request.getUserID(), "No userID provided.");
+                return;
+            }
+
+            // Check for dmChannelID
+            if (request.getDmChannelID().isEmpty()) {
+                messagingTemplate.convertAndSend("/topic/errors/" + request.getUserID(), "No dmChannelID provided.");
+                return;
+            }
+
+            // Check for junction with userID and dmChannelID
+            Optional<DirectMessageJunction> junctionOptional = dmJunctionsRepository.findByDMChannelIDAndUserID(request.getDmChannelID(), request.getUserID());
+
+            // Check for junction with userID and dmChannelID
+            if (junctionOptional.isEmpty()) {
+                messagingTemplate.convertAndSend("/topic/errors/" + request.getUserID(), "Invalid Request.");
+                return;
+            }
+
+            DirectMessageJunction junction = junctionOptional.get();
+
+            // Update show to false
+            junction.setShow(false);
+
+            // Save to db
+            dmJunctionsRepository.save(junction);
+
+            // Send back to user the dmChannelID to update it in the frontend.
+            messagingTemplate.convertAndSend("/topic/dm/channels/hide/" + request.getUserID(), request.getDmChannelID());
+
+        } catch (Exception e) {
+            System.out.println("Exception in hideDMChannel(): " + e.getMessage());
+            messagingTemplate.convertAndSend("/topic/errors/" + request.getUserID(), "Internal Server Error");
         }
     }
 
@@ -202,6 +271,21 @@ public class DirectMessageController {
             // Save the DM Channel
             dmChannelsRepository.save(dmChannel);
 
+            // Update all junctions in the channel to set show to true
+            List<DirectMessageJunction> junctions = dmJunctionsRepository.findByDMChannelID(dmChannel.getDmChannelID());
+            for (DirectMessageJunction junction : junctions) {
+                // If the junction is set to hide, update to true and output to that user's websocket route to update
+                if (!junction.isShow()) {
+                    // Set True
+                    junction.setShow(true);
+                    // Save to DB
+                    dmJunctionsRepository.save(junction);
+
+                    // Tell client to unhide
+                    messagingTemplate.convertAndSend("/topic/dm/channels/unhide/" + junction.getUserID(), dmChannel.getDmChannelID());
+                }
+            }
+
             // Convert the message to a FrontendDirectMessage
             User sender = userRepository.findById(dmRequest.getSenderID()).get();
             FrontendDirectMessage frontendDirectMessage = new FrontendDirectMessage(dmRequest.getDmID(), dmRequest.getDmChannelID(), dmRequest.getSenderID(), sender.getUsername(), sender.getAvatar(), dmRequest.getTimestamp(), dmRequest.getContent());
@@ -216,6 +300,8 @@ public class DirectMessageController {
             messagingTemplate.convertAndSend("/topic/errors/" + dmRequest.getSenderID(), e.getMessage() != null ? e.getMessage() : "Error while sending DM");
         }
     }
+
+
 
     /// -------------------- UTIL -------------------- ///
 
@@ -337,6 +423,61 @@ class GetDMSRequest {
     public GetDMSRequest(String dmChannelID, String userID) {
         this.dmChannelID = dmChannelID;
         this.userID = userID;
+    }
+
+    public String getDmChannelID() {
+        return dmChannelID;
+    }
+
+    public void setDmChannelID(String dmChannelID) {
+        this.dmChannelID = dmChannelID;
+    }
+
+    public String getUserID() {
+        return userID;
+    }
+
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+}
+
+class FrontendDMChannel extends DirectMessageChannel {
+    private boolean show;
+
+    public FrontendDMChannel(String dmChannelID, String avatar, String createdAt, String channelName, String lastModified, boolean show) {
+        super(dmChannelID, avatar, createdAt, channelName, lastModified);
+        this.show = show;
+    }
+
+    public FrontendDMChannel(DirectMessageChannel dmChannel, boolean show) {
+        super(dmChannel.getDmChannelID(), dmChannel.getAvatar(), dmChannel.getCreatedAt(), dmChannel.getChannelName(), dmChannel.getLastModified());
+        this.show = show;
+    }
+
+    public FrontendDMChannel(boolean show) {
+        this.show = show;
+    }
+
+    public boolean isShow() {
+        return show;
+    }
+
+    public void setShow(boolean show) {
+        this.show = show;
+    }
+}
+
+class HideDMChannelRequest {
+    private String dmChannelID;
+    private String userID;
+
+    public HideDMChannelRequest(String dmChannelID, String userID) {
+        this.dmChannelID = dmChannelID;
+        this.userID = userID;
+    }
+
+    public HideDMChannelRequest() {
     }
 
     public String getDmChannelID() {

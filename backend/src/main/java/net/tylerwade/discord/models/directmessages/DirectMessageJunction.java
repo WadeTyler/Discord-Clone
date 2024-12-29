@@ -11,10 +11,13 @@ public class DirectMessageJunction {
     private Long id;
     private String dmChannelID;
     private String userID;
+    @Column(name = "`show`")
+    private boolean show;
 
-    public DirectMessageJunction(String dmChannelID, String userID) {
+    public DirectMessageJunction(String dmChannelID, String userID, boolean show) {
         this.dmChannelID = dmChannelID;
         this.userID = userID;
+        this.show = show;
     }
 
     public DirectMessageJunction() {
@@ -42,5 +45,13 @@ public class DirectMessageJunction {
 
     public void setUserID(String userID) {
         this.userID = userID;
+    }
+
+    public boolean isShow() {
+        return show;
+    }
+
+    public void setShow(boolean show) {
+        this.show = show;
     }
 }

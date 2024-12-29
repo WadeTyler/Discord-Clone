@@ -218,6 +218,41 @@ const App = () => {
         queryClient.invalidateQueries({ queryKey: ['dmChannels'] });
     });
 
+    // Receive the command to hide a dmChannel
+    client.subscribe(`/topic/dm/channels/hide/${authUser?.userID}`, (response) => {
+      const dmChannelID = response.body;
+      console.log("Hiding DM Channel: ", dmChannelID);
+
+      // if it is the current channel, set the current channel to null
+      if (dmChannelID === currentDmChannel?.dmChannelID) {
+        queryClient.setQueryData<DMChannel | null>(['currentDmChannel'], null);
+      }
+
+      // Find the dmChannel with the matching ID and set show to false
+      if (dmChannels) {
+        for (let i = 0; i < dmChannels.length; i++) {
+          if (dmChannels[i].dmChannelID === dmChannelID) {
+            console.log("Channel Found - Hiding");
+            dmChannels[i].show = false;
+          }
+        }
+      }
+    });
+
+    // Receive the command to unhide a dmChannel
+    client.subscribe(`/topic/dm/channels/unhide/${authUser?.userID}`, (response) => {
+      const dmChannelID = response.body;
+      console.log("Unhiding DM Channel: ", dmChannelID);
+      if (dmChannels) {
+        // Find the dmChannel with the matching ID and set show to true
+        for (let i = 0; i < dmChannels.length; i++) {
+          if (dmChannels[i].dmChannelID === dmChannelID) {
+            dmChannels[i].show = true;
+          }
+        }
+      }
+    })
+
   };
 
   // On Disconnecting from WebSocket Broker
