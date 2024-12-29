@@ -475,6 +475,36 @@ const App = () => {
     }
   }, [client, currentServer, channels, currentTextChannel, currentVoiceChannel, queryClient, authUser, usersInServer]);
 
+  // Handle friends status change
+  useEffect(() => {
+    if (authUser && friends && client.connected) {
+      // Change status for friends going online
+      client.subscribe(`/topic/friends/status/${authUser.userID}/online`, (response) => {
+        const friendID = response.body;
+        // Update friends list, if the friend is the one specified update the status.
+        queryClient.setQueryData<Friend[]>(['friends'], friends.map(f => {
+          if (f.userID === friendID) {
+            f.status = "Online";
+          }
+          return f;
+        }));
+      });
+
+      // Change status for friends going offline
+      client.subscribe(`/topic/friends/status/${authUser.userID}/offline`, (response) => {
+        const friendID = response.body;
+        // Update friends list, if the friend is the one specified update the status.
+        queryClient.setQueryData<Friend[]>(['friends'], friends.map(f => {
+          if (f.userID === friendID) {
+            f.status = "Offline";
+          }
+          return f;
+        }));
+      });
+    }
+  }, [queryClient, friends, client, authUser]);
+
+
   /* --------------------------------------------------------------------------------------- */
 
   if (loadingAuthUser) {
